@@ -159,6 +159,7 @@ function run() {
 
   const filtered = isV3 ? filterV3(spec, service) : filterV2(spec, service);
 
+
   writeFileSync(outputPath, yaml.dump(filtered, { lineWidth: -1, noRefs: true }), 'utf8');
 
   const channelCount = Object.keys(filtered.channels ?? {}).length;

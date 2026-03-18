@@ -3,8 +3,8 @@
 # current service's channels/operations, generate TypeScript models, and commit.
 #
 # Usage:
-#   npm run generate:async -- --tag v1.2.3 --file my-events.yaml
-#   npm run generate:async -- --tag v1.2.3 --file my-events.yaml --service my-service
+#   npm run import:async -- --tag v1.2.3 --file my-events.yaml
+#   npm run import:async -- --tag v1.2.3 --file my-events.yaml --service my-service
 #
 # Arguments:
 #   --tag      Git tag or branch in notip-infra (required)
@@ -17,7 +17,7 @@ REMOTE_BASE="api-contracts/asyncapi"
 LOCAL_DIR="api-contracts/asyncapi"
 OUT_DIR="src/generated/asyncapi"
 
-SERVICE="management-api"
+SERVICE="data-api"
 TAG=""
 FILE=""
 
@@ -59,7 +59,7 @@ node scripts/filter-asyncapi.mjs \
   --service "${SERVICE}"
 
 # ---------------------------------------------------------------------------
-# 3. Generate TypeScript models from the filtered spec
+# 3. import TypeScript models from the filtered spec
 # ---------------------------------------------------------------------------
 OUTDIR="${OUT_DIR}/${NAME}"
 mkdir -p "${OUTDIR}"

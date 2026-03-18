@@ -2,7 +2,7 @@
 # Fetch a specific OpenAPI spec from notip-infra at a given tag, generate TypeScript types, and commit.
 #
 # Usage:
-#   npm run generate:openapi -- --tag v1.2.3 --file my-api.yaml
+#   npm run import:openapi -- --tag v1.2.3 --file my-api.yaml
 #
 # Arguments:
 #   --tag   Git tag or branch in notip-infra (required)
