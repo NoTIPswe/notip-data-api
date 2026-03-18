@@ -22,10 +22,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typecheck": "npx tsc --noEmit --project tsconfig.json",
-    "generate:openapi": "ts-node --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' scripts/generate-openapi.ts",
-    "contracts:fetch": "bash scripts/fetch-contracts.sh",
-    "contracts:generate": "bash scripts/generate-contracts.sh",
-    "contracts:sync": "npm run contracts:fetch && npm run contracts:generate"
+    "export:openapi": "ts-node --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' scripts/generate-openapi.ts",
+    "generate:openapi": "bash scripts/generate-openapi.sh",
+    "generate:async": "bash scripts/generate-asyncapi.sh"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
