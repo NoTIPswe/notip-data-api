@@ -7,8 +7,8 @@ async function generateOpenApi(): Promise<void> {
   const app = await NestFactory.create(AppModule, { logger: false });
 
   const config = new DocumentBuilder()
-    .setTitle('NoTIP Management API')
-    .setDescription('NoTIP Management API OpenAPI specification')
+    .setTitle('NoTIP Data API')
+    .setDescription('NoTIP Data API OpenAPI specification')
     .setVersion(process.env.npm_package_version ?? '1.0.0')
     .build();
 

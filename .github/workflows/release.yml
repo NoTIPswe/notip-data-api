@@ -154,7 +154,7 @@ jobs:
         run: npm ci
 
       - name: Generate OpenAPI spec
-        run: npm run generate:openapi
+        run: npm run export:openapi
 
       - name: Checkout notip-infra
         uses: actions/checkout@v6
@@ -165,19 +165,19 @@ jobs:
           path: notip-infra
 
       - name: Replace API definition in notip-infra
-        run: cp openapi.json notip-infra/api-contracts/openapi/management-api.json
+        run: cp openapi.json notip-infra/api-contracts/openapi/data-api.json
 
       - name: Open PR on notip-infra
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.NOTIP_INFRA_WRITE_PAT }}
           path: notip-infra
-          commit-message: 'feat(api): update notip-management-api spec to v${{ needs.release.outputs.version }}'
-          title: 'feat(api): update notip-management-api spec to v${{ needs.release.outputs.version }}'
+          commit-message: 'feat(api): update notip-data-api spec to v${{ needs.release.outputs.version }}'
+          title: 'feat(api): update notip-data-api spec to v${{ needs.release.outputs.version }}'
           body: |
-            Automated OpenAPI spec update from **notip-management-api**.
+            Automated OpenAPI spec update from **notip-data-api**.
 
             - **Version**: `v${{ needs.release.outputs.version }}`
             - **Source release**: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.release.outputs.version }}
-          branch: 'feat/update-management-api-spec-v${{ needs.release.outputs.version }}'
+          branch: 'feat/update-data-api-spec-v${{ needs.release.outputs.version }}'
           base: main

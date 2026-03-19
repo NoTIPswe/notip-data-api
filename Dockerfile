@@ -15,7 +15,7 @@ RUN npm run build
 
 # ─── Production ─────────────────────────────────────────────────────────────
 FROM ghcr.io/notipswe/notip-nest-base:v0.0.1 AS prod
-LABEL org.opencontainers.image.source="https://github.com/NoTIPswe/notip-management-api/"
+LABEL org.opencontainers.image.source="https://github.com/NoTIPswe/notip-data-api/"
 
 ENV NODE_ENV=production
 WORKDIR /app

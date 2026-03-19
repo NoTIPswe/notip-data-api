@@ -9,7 +9,7 @@
 # Arguments:
 #   --tag      Git tag or branch in notip-infra (required)
 #   --file     Filename inside api-contracts/asyncapi/ in notip-infra (required)
-#   --service  Service tag to filter by (default: management-api)
+#   --service  Service tag to filter by (default: data-api)
 set -euo pipefail
 
 REPO="notipswe/notip-infra"
