@@ -5,9 +5,10 @@ import { NpQueryPersistenceInput } from './../interfaces/np-query-persistence.in
 import { PQueryPersistenceInput } from './../interfaces/p-query-persistence.input';
 import { Repository } from 'typeorm';
 import { PaginatedQuery } from './../interfaces/paginated-query';
+import { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
 
 @Injectable()
-export class MeasurePersistenceService {
+export class MeasurePersistenceService implements NpQueryPersistenceService{
   constructor(@InjectRepository(MeasureEntity) private readonly r: Repository<MeasureEntity>,) {}
 
   async paginatedQuery(p: PQueryPersistenceInput): Promise<PaginatedQuery> {
