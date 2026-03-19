@@ -7,7 +7,6 @@ import { QueryInput } from './../interfaces/query.input';
 import { ExportInput } from './../interfaces/export.input';
 
 
-
 @Controller('measures')
 export class MeasureController {
   constructor(private readonly ms: MeasureService) {}
