@@ -1,6 +1,6 @@
 import { StreamInput } from './stream.input';
 
-export class ExportInput extends StreamInput {
+export interface ExportInput extends StreamInput {
   from: string;
   to: string;
 }

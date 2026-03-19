@@ -1,6 +1,6 @@
 import { ExportInput } from './export.input';
 
-export class QueryInput extends ExportInput {
+export interface QueryInput extends ExportInput {
   cursor?: string;
   limit: number;
 }

@@ -3,6 +3,9 @@ import { MeasureService } from './measure.service';
 import { QueryResponseDto } from './dto/query.response.dto';
 import { EncryptedEnvelopeDto } from './dto/encrypted-envelope.dto';
 import { MeasureMapper } from './measure.mapper';
+import { QueryInput } from './query.input';
+import { ExportInput } from './export.input';
+
 
 
 @Controller('measures')
@@ -20,33 +23,37 @@ export class MeasureController {
     @Query('limit') limit?: string,
   ): Promise<QueryResponseDto> {
 
-    const parsedLimit = limit ? Number(limit) : undefined;
-
-    const queryModel = await this.ms.query(
+    const input: QueryInput = {
       from,
       to,
       gatewayId,
       sensorId,
       sensorType,
       cursor,
-      parsedLimit,
-    );
-
+      limit: limit ? Number(limit) : 100,
+    };
+    const queryModel = await this.ms.query(input);
     return MeasureMapper.toQueryResponseDto(queryModel);
   }
 
 
   @Get('stream')
   async stream(
+    @Query('from') from: string,
+    @Query('to') to: string,
     @Query('gatewayId') gatewayId?: string[],
     @Query('sensorId') sensorId?: string[],
     @Query('sensorType') sensorType?: string[],
   ): Promise<EncryptedEnvelopeDto>{
-    const streamModel = await this.ms.stream(
+
+    const input: ExportInput = {
+      from,
+      to,
       gatewayId,
       sensorId,
       sensorType,
-    );
+    };
+    const streamModel = await this.ms.stream(input);
     return MeasureMapper.toStreamResponseDto(streamModel);
   }
 
@@ -58,15 +65,17 @@ export class MeasureController {
     @Query('gatewayId') gatewayId?: string[],
     @Query('sensorId') sensorId?: string[],
     @Query('sensorType') sensorType?: string[],
-  ): Promise<EncryptedEnvelopeDto[]>{
-    const exportModel = await  this.ms.export(
+  ): Promise<EncryptedEnvelopeDto>{
+
+    const input: ExportInput = {
       from,
       to,
       gatewayId,
       sensorId,
       sensorType,
-    );
-    return MeasureMapper.toExportResponseDto(exportModel);
+    };
+    const exportModel = await this.ms.export(input);
+    return MeasureMapper.toStreamResponseDto(exportModel);
   }
 
   

@@ -1,7 +1,7 @@
 export class EncryptedEnvelopeModel {
-  gatewayId: string;
-  sensorId: string;
-  sensorType: string;
+  gatewayId: string[];
+  sensorId: string[];
+  sensorType: string[];
   timestamp: string;
   encryptedData: string;
   iv: string;
