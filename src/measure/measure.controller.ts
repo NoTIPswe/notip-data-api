@@ -23,11 +23,11 @@ export class MeasureController {
     const parsedLimit = limit ? Number(limit) : undefined;
 
     const queryModel = await this.ms.query(
+      from,
+      to,
       gatewayId,
       sensorId,
       sensorType,
-      from,
-      to,
       cursor,
       parsedLimit,
     );
