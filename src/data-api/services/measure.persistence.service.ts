@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { MeasureEntity } from './measure.entity';
-import { NpQueryPersistenceInput } from './np-query-persistence.input';
-import { PQueryPersistenceInput } from './p-query-persistence.input';
+import { MeasureEntity } from './../entity/measure.entity';
+import { NpQueryPersistenceInput } from './../interfaces/np-query-persistence.input';
+import { PQueryPersistenceInput } from './../interfaces/p-query-persistence.input';
 import { Repository } from 'typeorm';
-import { PaginatedQuery } from './paginated-query';
+import { PaginatedQuery } from './../interfaces/paginated-query';
 
 
 

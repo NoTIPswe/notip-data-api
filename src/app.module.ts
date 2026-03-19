@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MeasureModule } from './measure/measure.module';
+import { MeasureModule } from './data-api/measure.module';
 
 @Module({
   imports: [MeasureModule],

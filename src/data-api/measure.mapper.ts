@@ -1,7 +1,9 @@
 import { EncryptedEnvelopeDto } from './dto/encrypted-envelope.dto';
 import { QueryResponseDto } from './dto/query.response.dto';
-import { EncryptedEnvelopeModel } from './encrypted-envelope.model';
-import { PaginatedQueryModel } from './paginated-query.model';
+import { EncryptedEnvelopeModel } from './models/encrypted-envelope.model';
+import { PaginatedQueryModel } from './models/paginated-query.model';
+import { MeasureEntity } from './entity/measure.entity';
+import { PaginatedQuery } from './interfaces/paginated-query';
 
 export class MeasureMapper {
   static toEncryptedEnvelopeDto( model: EncryptedEnvelopeModel,): EncryptedEnvelopeDto {
@@ -32,4 +34,31 @@ export class MeasureMapper {
   static toStreamResponseDto(model: EncryptedEnvelopeModel,): EncryptedEnvelopeDto {
     return this.toEncryptedEnvelopeDto(model);
   }
+
+
+  static toEncryptedEnvelopeModel( entity: MeasureEntity,): EncryptedEnvelopeModel {
+    return {
+      gatewayId: entity.gatewayId,
+      sensorId: entity.sensorId,
+      sensorType: entity.sensorType,
+      timestamp: entity.time,
+      encryptedData: entity.encryptedData,
+      iv: entity.iv,
+      authTag: entity.authTag,
+      keyVersion: entity.keyVersion,
+    };
+  }
+
+  static toEncryptedEnvelopeModels(entities: MeasureEntity[],): EncryptedEnvelopeModel[] {
+    return entities.map((entity) => this.toEncryptedEnvelopeModel(entity));
+  }
+
+  static toPaginatedQueryModel(result: PaginatedQuery,): PaginatedQueryModel {
+    return {
+      data: result.data.map((entity) => this.toEncryptedEnvelopeModel(entity)),
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+    };
+  }
 }
+
