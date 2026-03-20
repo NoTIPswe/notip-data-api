@@ -1,53 +1,82 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import type { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
 import { getSensorsInput } from '../interfaces/get-sensors.input';
 import { sensorModel } from '../models/sensor.model';
 import { NpQueryPersistenceInput } from '../interfaces/np-query-persistence.input';
 import { MeasureEntity } from '../entity/measure.entity';
 
-
 @Injectable()
 export class SensorService {
   constructor(
     @Inject('NpQueryPersistenceService')
-    private readonly npqps: NpQueryPersistenceService,) {}
+    private readonly npqps: NpQueryPersistenceService,
+  ) {}
 
-    async getSensors(input: getSensorsInput): Promise<sensorModel[]>{
-        const now = new Date();
-        const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
-        const queryInput: NpQueryPersistenceInput = {
-            gatewayId: input.gatewayId,
-            from: tenMinutesAgo.toISOString(),
-            to: now.toISOString(),
-        };
+  async getSensors(input: getSensorsInput): Promise<sensorModel[]> {
+    const now = new Date();
+    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
+    const queryInput: NpQueryPersistenceInput = {
+      gatewayId: input.gatewayId,
+      from: tenMinutesAgo.toISOString(),
+      to: now.toISOString(),
+    };
 
-        const measures = await this.npqps.nonPaginatedQuery(queryInput);
-        return this.toSensorModels(measures);
+    try {
+      const measures = await this.npqps.nonPaginatedQuery(queryInput);
+      return this.toSensorModels(measures);
+    } catch (error: any) {
+      const status = error?.status ?? error?.response?.status;
 
+      if (status === 401) {
+        throw new UnauthorizedException(
+          error?.response?.data ?? error?.message ?? 'Unauthorized',
+        );
+      }
+
+      if (status === 403) {
+        throw new ForbiddenException(
+          error?.response?.data ?? error?.message ?? 'Forbidden',
+        );
+      }
+
+      if (status === 404) {
+        throw new NotFoundException(
+          error?.response?.data ?? error?.message ?? 'Not found',
+        );
+      }
+
+      throw error;
     }
+  }
 
-    private toSensorModels(measures: MeasureEntity[]): sensorModel[] {
-        const sensorsMap = new Map<string, sensorModel>();
+  private toSensorModels(measures: MeasureEntity[]): sensorModel[] {
+    const sensorsMap = new Map<string, sensorModel>();
 
-        for (const measure of measures) {
-        const key = `${measure.gatewayId}::${measure.sensorId}::${measure.sensorType}`;
+    for (const measure of measures) {
+      const key = `${measure.gatewayId}::${measure.sensorId}::${measure.sensorType}`;
 
-        const existing = sensorsMap.get(key);
+      const existing = sensorsMap.get(key);
 
-        if (!existing) {
-            sensorsMap.set(key, {
-            gatewayId: measure.gatewayId,
-            sensorId: measure.sensorId,
-            sensorType: measure.sensorType,
-            lastSeen: measure.time,
-            });
-            continue;
-        }
+      if (!existing) {
+        sensorsMap.set(key, {
+          gatewayId: measure.gatewayId,
+          sensorId: measure.sensorId,
+          sensorType: measure.sensorType,
+          lastSeen: measure.time,
+        });
+        continue;
+      }
 
-        if (new Date(measure.time) > new Date(existing.lastSeen)) {
-            existing.lastSeen = measure.time;
-        }
-        }
-        return Array.from(sensorsMap.values());
+      if (new Date(measure.time) > new Date(existing.lastSeen)) {
+        existing.lastSeen = measure.time;
+      }
     }
-    }
+    return Array.from(sensorsMap.values());
+  }
+}

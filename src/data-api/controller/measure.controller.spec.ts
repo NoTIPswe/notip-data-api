@@ -8,13 +8,16 @@ describe('MeasureController', () => {
   let controller: MeasureController; //istanza reale del controller da testare
   let service: jest.Mocked<MeasureService>; //versione mockata del MeasureService
 
-  const mockMeasureService = { //creazione del mock del service
+  const mockMeasureService = {
+    //creazione del mock del service
     query: jest.fn(),
     export: jest.fn(),
   };
 
-  beforeEach(async () => { //setup prima di ogni unit test
-    const module: TestingModule = await Test.createTestingModule({ //creazione di un modulo Nest finto
+  beforeEach(async () => {
+    //setup prima di ogni unit test
+    const module: TestingModule = await Test.createTestingModule({
+      //creazione di un modulo Nest finto
       controllers: [MeasureController],
       providers: [
         {
@@ -22,7 +25,7 @@ describe('MeasureController', () => {
           useValue: mockMeasureService, //sostituisce il vero service con il mock
         },
       ],
-    }).compile(); 
+    }).compile();
 
     controller = module.get<MeasureController>(MeasureController); //il controller viene creato con dentro il service mockato
     service = module.get(MeasureService);
@@ -32,7 +35,8 @@ describe('MeasureController', () => {
     jest.clearAllMocks(); //alla fine diu ogni test pulizia
   });
 
-  describe('query', () => { //test del metodo query
+  describe('query', () => {
+    //test del metodo query
     it('should call service.query with the correct input and return mapped response', async () => {
       const from = '2024-01-01T00:00:00Z';
       const to = '2024-01-02T00:00:00Z'; //simulazione parametri HTTP
@@ -42,12 +46,13 @@ describe('MeasureController', () => {
       const sensorType = ['temp', 'hum'];
       const cursor = 'next-cursor';
 
-      const queryModel = { //finto risultato 
+      const queryModel = {
+        //finto risultato
         items: [{ id: '1' }],
         cursor: 'next-cursor',
       };
 
-      const queryResponseDto = { 
+      const queryResponseDto = {
         data: [{ id: '1' }],
         cursor: 'next-cursor',
       };
@@ -137,13 +142,9 @@ describe('MeasureController', () => {
       const sensorId = ['s-1'];
       const sensorType = ['temp'];
 
-      const exportModel = [
-        { encryptedData: 'abc123' },
-      ];
+      const exportModel = [{ encryptedData: 'abc123' }];
 
-      const exportResponseDto = [
-        { payload: 'abc123' },
-      ];
+      const exportResponseDto = [{ payload: 'abc123' }];
 
       service.export.mockResolvedValue(exportModel as any);
 
@@ -177,8 +178,8 @@ describe('MeasureController', () => {
       const from = '2024-01-01T00:00:00Z';
       const to = '2024-01-02T00:00:00Z';
 
-      const exportModel : any[]= [];
-      const exportResponseDto : any[]= [];
+      const exportModel: any[] = [];
+      const exportResponseDto: any[] = [];
 
       service.export.mockResolvedValue(exportModel as any);
 

@@ -14,4 +14,4 @@ import { MeasurePersistenceService } from './services/measure.persistence.servic
     },
   ],
 })
-export class MeasureModule {}
+export class SensorModule {}

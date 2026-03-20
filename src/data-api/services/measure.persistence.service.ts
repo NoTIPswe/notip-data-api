@@ -8,8 +8,11 @@ import { PaginatedQuery } from './../interfaces/paginated-query';
 import { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
 
 @Injectable()
-export class MeasurePersistenceService implements NpQueryPersistenceService{
-  constructor(@InjectRepository(MeasureEntity) private readonly r: Repository<MeasureEntity>,) {}
+export class MeasurePersistenceService implements NpQueryPersistenceService {
+  constructor(
+    @InjectRepository(MeasureEntity)
+    private readonly r: Repository<MeasureEntity>,
+  ) {}
 
   async paginatedQuery(p: PQueryPersistenceInput): Promise<PaginatedQuery> {
     const qb = this.r.createQueryBuilder('m');
@@ -50,7 +53,9 @@ export class MeasurePersistenceService implements NpQueryPersistenceService{
     };
   }
 
-  async nonPaginatedQuery(n: NpQueryPersistenceInput,): Promise<MeasureEntity[]> {
+  async nonPaginatedQuery(
+    n: NpQueryPersistenceInput,
+  ): Promise<MeasureEntity[]> {
     const qb = this.r.createQueryBuilder('m');
 
     if (n.gatewayId) {

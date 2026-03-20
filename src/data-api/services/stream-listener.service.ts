@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -7,27 +11,38 @@ import { StreamInput } from '../interfaces/stream.input';
 
 @Injectable()
 export class StreamListenerService {
-
   /**
    * Espone uno stream filtrato al controller.
    */
   stream(input: StreamInput): Observable<EncryptedEnvelopeModel> {
-    return this.listenToSource().pipe(
+    if (this.isUnauthorized(input)) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    if (this.isForbidden(input)) {
+      throw new ForbiddenException('Forbidden');
+    }
+
+    return this.listenToSource(input).pipe(
       filter((event) => this.matchesFilters(event, input)),
     );
   }
 
   /**
    * Sorgente degli eventi.
-   * 
+   *
    * ⚠️ ATTUALE: simulazione per sviluppo
    * 🔜 FUTURO: Kafka / MQTT / WebSocket / EventBus
    */
-  private listenToSource(): Observable<EncryptedEnvelopeModel> {
+  private listenToSource(input: StreamInput): Observable<EncryptedEnvelopeModel> {
     return new Observable<EncryptedEnvelopeModel>((subscriber) => {
-
-      // 🔧 MOCK per sviluppo (rimuovere quando hai la sorgente reale)
       const interval = setInterval(() => {
+        if (this.isTokenExpired(input)) {
+          clearInterval(interval);
+          subscriber.error(new UnauthorizedException('Token expired'));
+          return;
+        }
+
         subscriber.next({
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
@@ -54,7 +69,6 @@ export class StreamListenerService {
     event: EncryptedEnvelopeModel,
     input: StreamInput,
   ): boolean {
-
     const matchesGateway =
       !input.gatewayId?.length || input.gatewayId.includes(event.gatewayId);
 
@@ -62,9 +76,32 @@ export class StreamListenerService {
       !input.sensorId?.length || input.sensorId.includes(event.sensorId);
 
     const matchesSensorType =
-      !input.sensorType?.length ||
-      input.sensorType.includes(event.sensorType);
+      !input.sensorType?.length || input.sensorType.includes(event.sensorType);
 
     return matchesGateway && matchesSensor && matchesSensorType;
+  }
+
+  /**
+   * Simulazione controllo 401.
+   * Sostituire con validazione reale del token.
+   */
+  private isUnauthorized(input: StreamInput): boolean {
+    return false;
+  }
+
+  /**
+   * Simulazione controllo 403.
+   * Sostituire con controllo reale dei permessi.
+   */
+  private isForbidden(input: StreamInput): boolean {
+    return false;
+  }
+
+  /**
+   * Simulazione token scaduto durante lo stream.
+   * Sostituire con controllo reale su exp / sessione / auth provider.
+   */
+  private isTokenExpired(input: StreamInput): boolean {
+    return false;
   }
 }

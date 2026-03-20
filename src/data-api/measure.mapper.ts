@@ -6,9 +6,10 @@ import { MeasureEntity } from './entity/measure.entity';
 import { PaginatedQuery } from './interfaces/paginated-query';
 import { Observable, map } from 'rxjs';
 
-
 export class MeasureMapper {
-  static toEncryptedEnvelopeDto( model: EncryptedEnvelopeModel,): EncryptedEnvelopeDto {
+  static toEncryptedEnvelopeDto(
+    model: EncryptedEnvelopeModel,
+  ): EncryptedEnvelopeDto {
     return {
       gatewayId: model.gatewayId,
       sensorId: model.sensorId,
@@ -29,22 +30,27 @@ export class MeasureMapper {
     };
   }
 
-  static toExportResponseDto(models: EncryptedEnvelopeModel[],): EncryptedEnvelopeDto[] {
+  static toExportResponseDto(
+    models: EncryptedEnvelopeModel[],
+  ): EncryptedEnvelopeDto[] {
     return models.map((item) => this.toEncryptedEnvelopeDto(item));
   }
 
-  static toStreamItemResponseDto(model: EncryptedEnvelopeModel,): EncryptedEnvelopeDto {
+  static toStreamItemResponseDto(
+    model: EncryptedEnvelopeModel,
+  ): EncryptedEnvelopeDto {
     return this.toEncryptedEnvelopeDto(model);
   }
 
-  static toStreamResponseDto(stream$: Observable<EncryptedEnvelopeModel>,): Observable<EncryptedEnvelopeDto> {
-    return stream$.pipe(
-      map((model) => this.toStreamItemResponseDto(model)),
-    );
+  static toStreamResponseDto(
+    stream$: Observable<EncryptedEnvelopeModel>,
+  ): Observable<EncryptedEnvelopeDto> {
+    return stream$.pipe(map((model) => this.toStreamItemResponseDto(model)));
   }
 
-
-  static toEncryptedEnvelopeModel( entity: MeasureEntity,): EncryptedEnvelopeModel {
+  static toEncryptedEnvelopeModel(
+    entity: MeasureEntity,
+  ): EncryptedEnvelopeModel {
     return {
       gatewayId: entity.gatewayId,
       sensorId: entity.sensorId,
@@ -57,20 +63,17 @@ export class MeasureMapper {
     };
   }
 
-  static toEncryptedEnvelopeModels(entities: MeasureEntity[],): EncryptedEnvelopeModel[] {
+  static toEncryptedEnvelopeModels(
+    entities: MeasureEntity[],
+  ): EncryptedEnvelopeModel[] {
     return entities.map((entity) => this.toEncryptedEnvelopeModel(entity));
   }
 
-  static toPaginatedQueryModel(result: PaginatedQuery,): PaginatedQueryModel {
+  static toPaginatedQueryModel(result: PaginatedQuery): PaginatedQueryModel {
     return {
       data: result.data.map((entity) => this.toEncryptedEnvelopeModel(entity)),
       nextCursor: result.nextCursor,
       hasMore: result.hasMore,
     };
   }
-
-
-
-
 }
-

@@ -1,6 +1,6 @@
-import { NpQueryPersistenceInput } from "./np-query-persistence.input";
-import { MeasureEntity } from "../entity/measure.entity";
+import { NpQueryPersistenceInput } from './np-query-persistence.input';
+import { MeasureEntity } from '../entity/measure.entity';
 
-export interface NpQueryPersistenceService{
-    nonPaginatedQuery(n: NpQueryPersistenceInput,): Promise<MeasureEntity[]>;
+export interface NpQueryPersistenceService {
+  nonPaginatedQuery(n: NpQueryPersistenceInput): Promise<MeasureEntity[]>;
 }

@@ -1,3 +1,3 @@
-export interface getSensorsInput{
-    gatewayId?: string[];
+export interface getSensorsInput {
+  gatewayId?: string[];
 }

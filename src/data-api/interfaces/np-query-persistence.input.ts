@@ -1,4 +1,4 @@
-export interface NpQueryPersistenceInput{
+export interface NpQueryPersistenceInput {
   gatewayId?: string[];
   sensorId?: string[];
   sensorType?: string[];
