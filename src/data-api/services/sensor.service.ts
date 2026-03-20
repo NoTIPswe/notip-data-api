@@ -1,9 +1,53 @@
-import { Injectable } from '@nestjs/common';
-import { NpQueryPersistenceService } from './../interfaces/np-query-persistence.service';
+import { Inject, Injectable } from '@nestjs/common';
+import type { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
+import { getSensorsInput } from '../interfaces/get-sensors.input';
+import { sensorModel } from '../models/sensor.model';
+import { NpQueryPersistenceInput } from '../interfaces/np-query-persistence.input';
+import { MeasureEntity } from '../entity/measure.entity';
+
 
 @Injectable()
 export class SensorService {
-    constructor(private readonly npqps: NpQueryPersistenceService) {}
+  constructor(
+    @Inject('NpQueryPersistenceService')
+    private readonly npqps: NpQueryPersistenceService,) {}
 
-    //rendi l'interfaccia Np una abstract class
-}
+    async getSensors(input: getSensorsInput): Promise<sensorModel[]>{
+        const now = new Date();
+        const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
+        const queryInput: NpQueryPersistenceInput = {
+            gatewayId: input.gatewayId,
+            from: tenMinutesAgo.toISOString(),
+            to: now.toISOString(),
+        };
+
+        const measures = await this.npqps.nonPaginatedQuery(queryInput);
+        return this.toSensorModels(measures);
+
+    }
+
+    private toSensorModels(measures: MeasureEntity[]): sensorModel[] {
+        const sensorsMap = new Map<string, sensorModel>();
+
+        for (const measure of measures) {
+        const key = `${measure.gatewayId}::${measure.sensorId}::${measure.sensorType}`;
+
+        const existing = sensorsMap.get(key);
+
+        if (!existing) {
+            sensorsMap.set(key, {
+            gatewayId: measure.gatewayId,
+            sensorId: measure.sensorId,
+            sensorType: measure.sensorType,
+            lastSeen: measure.time,
+            });
+            continue;
+        }
+
+        if (new Date(measure.time) > new Date(existing.lastSeen)) {
+            existing.lastSeen = measure.time;
+        }
+        }
+        return Array.from(sensorsMap.values());
+    }
+    }
