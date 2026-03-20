@@ -13,7 +13,6 @@ import { NpQueryPersistenceInput } from './../interfaces/np-query-persistence.in
 export class MeasureService {
     constructor(private readonly mps: MeasurePersistenceService) {}
     async query(input: QueryInput): Promise<PaginatedQueryModel> {
-        
         const pInput: PQueryPersistenceInput = {
             gatewayId: input.gatewayId,
             sensorId: input.sensorId,

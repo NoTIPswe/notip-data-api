@@ -4,6 +4,8 @@ import { EncryptedEnvelopeModel } from './models/encrypted-envelope.model';
 import { PaginatedQueryModel } from './models/paginated-query.model';
 import { MeasureEntity } from './entity/measure.entity';
 import { PaginatedQuery } from './interfaces/paginated-query';
+import { Observable, map } from 'rxjs';
+
 
 export class MeasureMapper {
   static toEncryptedEnvelopeDto( model: EncryptedEnvelopeModel,): EncryptedEnvelopeDto {
@@ -31,8 +33,14 @@ export class MeasureMapper {
     return models.map((item) => this.toEncryptedEnvelopeDto(item));
   }
 
-  static toStreamResponseDto(model: EncryptedEnvelopeModel,): EncryptedEnvelopeDto {
+  static toStreamItemResponseDto(model: EncryptedEnvelopeModel,): EncryptedEnvelopeDto {
     return this.toEncryptedEnvelopeDto(model);
+  }
+
+  static toStreamResponseDto(stream$: Observable<EncryptedEnvelopeModel>,): Observable<EncryptedEnvelopeDto> {
+    return stream$.pipe(
+      map((model) => this.toStreamItemResponseDto(model)),
+    );
   }
 
 
@@ -60,5 +68,9 @@ export class MeasureMapper {
       hasMore: result.hasMore,
     };
   }
+
+
+
+
 }
 

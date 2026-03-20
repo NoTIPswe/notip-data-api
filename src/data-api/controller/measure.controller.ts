@@ -5,11 +5,14 @@ import { EncryptedEnvelopeDto } from './../dto/encrypted-envelope.dto';
 import { MeasureMapper } from './../measure.mapper';
 import { QueryInput } from './../interfaces/query.input';
 import { ExportInput } from './../interfaces/export.input';
+import { Observable } from 'rxjs';
+import { StreamInput } from '../interfaces/stream.input';
+import { StreamListenerService } from '../services/stream-listener.service';
 
 
 @Controller('measures')
 export class MeasureController {
-  constructor(private readonly ms: MeasureService) {}
+  constructor(private readonly ms: MeasureService, private readonly sl: StreamListenerService) {}
 
   @Get('query')
   async query(
@@ -36,7 +39,21 @@ export class MeasureController {
   }
 
 
-  //manca la get dello stream
+  @Get('stream')
+  stream(
+    @Query('gatewayId') gatewayId?: string[],
+    @Query('sensorId') sensorId?: string[],
+    @Query('sensorType') sensorType?: string[],
+  ): Observable<EncryptedEnvelopeDto>{
+
+    const input : StreamInput ={
+      gatewayId,
+      sensorId,
+      sensorType,
+    };
+    const streamModel = this.sl.stream(input);
+    return MeasureMapper.toStreamResponseDto(streamModel);
+  }
 
 
   @Get('export')
