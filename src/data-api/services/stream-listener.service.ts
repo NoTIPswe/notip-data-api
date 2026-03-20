@@ -1,57 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
+
 import { EncryptedEnvelopeModel } from '../models/encrypted-envelope.model';
 import { StreamInput } from '../interfaces/stream.input';
-
 
 @Injectable()
 export class StreamListenerService {
 
   /**
-   * Metodo principale esposto al controller.
-   * 
-   * - Riceve i filtri (StreamInput)
-   * - Restituisce uno stream di EncryptedEnvelopeModel
-   * - Applica i filtri sugli eventi ricevuti dalla sorgente esterna
+   * Espone uno stream filtrato al controller.
    */
   stream(input: StreamInput): Observable<EncryptedEnvelopeModel> {
-
     return this.listenToSource().pipe(
       filter((event) => this.matchesFilters(event, input)),
     );
   }
 
   /**
-   * Qui ci si collega alla sorgente reale degli eventi.
-
+   * Sorgente degli eventi.
    * 
-   * ATTUALMENTE NON IMPLEMENTATO → placeholder architetturale
+   * ⚠️ ATTUALE: simulazione per sviluppo
+   * 🔜 FUTURO: Kafka / MQTT / WebSocket / EventBus
    */
   private listenToSource(): Observable<EncryptedEnvelopeModel> {
     return new Observable<EncryptedEnvelopeModel>((subscriber) => {
 
-      // TODO: sostituire con sorgente reale
-
-      // Esempio (NON reale):
-      // externalSource.onMessage((rawEvent) => {
-      //   const model = this.mapToModel(rawEvent);
-      //   subscriber.next(model);
-      // });
+      // 🔧 MOCK per sviluppo (rimuovere quando hai la sorgente reale)
+      const interval = setInterval(() => {
+        subscriber.next({
+          gatewayId: 'gw-1',
+          sensorId: 'sensor-1',
+          sensorType: 'temperature',
+          timestamp: new Date().toISOString(),
+          encryptedData: 'encrypted',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
+        });
+      }, 1000);
 
       // Cleanup quando il client si disconnette
       return () => {
-        // unsubscribe / disconnect dalla sorgente reale
+        clearInterval(interval);
       };
     });
   }
 
   /**
-   * Applica i filtri definiti nello StreamInput.
-   * 
-   * Regola:
-   * - Se un filtro NON è presente → non filtra (passa tutto)
-   * - Se è presente → deve matchare
+   * Applica i filtri dello stream.
    */
   private matchesFilters(
     event: EncryptedEnvelopeModel,
