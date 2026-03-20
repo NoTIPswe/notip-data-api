@@ -1,18 +1,21 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Sse, MessageEvent } from '@nestjs/common';
 import { MeasureService } from './../services/measure.service';
 import { QueryResponseDto } from './../dto/query.response.dto';
 import { EncryptedEnvelopeDto } from './../dto/encrypted-envelope.dto';
 import { MeasureMapper } from './../measure.mapper';
 import { QueryInput } from './../interfaces/query.input';
 import { ExportInput } from './../interfaces/export.input';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { StreamInput } from '../interfaces/stream.input';
 import { StreamListenerService } from '../services/stream-listener.service';
-
+import { EncryptedEnvelopeModel } from '../models/encrypted-envelope.model';
 
 @Controller('measures')
 export class MeasureController {
-  constructor(private readonly ms: MeasureService, private readonly sl: StreamListenerService) {}
+  constructor(
+    private readonly ms: MeasureService,
+    private readonly sl: StreamListenerService,
+  ) {}
 
   @Get('query')
   async query(
@@ -24,7 +27,6 @@ export class MeasureController {
     @Query('sensorType') sensorType?: string[],
     @Query('cursor') cursor?: string,
   ): Promise<QueryResponseDto> {
-
     const input: QueryInput = {
       from,
       to,
@@ -34,27 +36,29 @@ export class MeasureController {
       sensorType,
       cursor,
     };
+
     const queryModel = await this.ms.query(input);
     return MeasureMapper.toQueryResponseDto(queryModel);
   }
 
-
-  @Get('stream')
+  @Sse('stream')
   stream(
     @Query('gatewayId') gatewayId?: string[],
     @Query('sensorId') sensorId?: string[],
     @Query('sensorType') sensorType?: string[],
-  ): Observable<EncryptedEnvelopeDto>{
-
-    const input : StreamInput ={
+  ): Observable<MessageEvent> {
+    const input: StreamInput = {
       gatewayId,
       sensorId,
       sensorType,
     };
-    const streamModel = this.sl.stream(input);
-    return MeasureMapper.toStreamResponseDto(streamModel);
-  }
 
+    return this.sl.stream(input).pipe(
+      map((model: EncryptedEnvelopeModel) => ({
+        data: MeasureMapper.toEncryptedEnvelopeDto(model),
+      })),
+    );
+  }
 
   @Get('export')
   async export(
@@ -63,8 +67,7 @@ export class MeasureController {
     @Query('gatewayId') gatewayId?: string[],
     @Query('sensorId') sensorId?: string[],
     @Query('sensorType') sensorType?: string[],
-  ): Promise<EncryptedEnvelopeDto[]>{
-
+  ): Promise<EncryptedEnvelopeDto[]> {
     const input: ExportInput = {
       from,
       to,
@@ -72,9 +75,8 @@ export class MeasureController {
       sensorId,
       sensorType,
     };
+
     const exportModel = await this.ms.export(input);
     return MeasureMapper.toExportResponseDto(exportModel);
   }
-
-  
 }

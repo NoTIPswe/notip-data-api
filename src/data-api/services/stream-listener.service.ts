@@ -4,6 +4,7 @@ import { filter } from 'rxjs/operators';
 import { EncryptedEnvelopeModel } from '../models/encrypted-envelope.model';
 import { StreamInput } from '../interfaces/stream.input';
 
+
 @Injectable()
 export class StreamListenerService {
 
