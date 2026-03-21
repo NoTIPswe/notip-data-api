@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { SensorService } from './sensor.service';
 import type { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
+import { getSensorsInput } from '../interfaces/get-sensors.input';
+import { MeasureEntity } from '../entity/measure.entity';
 
 describe('SensorService', () => {
   let service: SensorService;
@@ -23,22 +25,28 @@ describe('SensorService', () => {
   });
 
   describe('getSensors', () => {
-    const input = {
-      gatewayId: 'gw-1',
+    const input: getSensorsInput = {
+      gatewayId: ['gw-1'],
     };
 
     it('should call nonPaginatedQuery with gatewayId and a 10-minute window', async () => {
       npqps.nonPaginatedQuery.mockResolvedValue([]);
 
       const beforeCall = Date.now();
-      await service.getSensors(input as any);
+      await service.getSensors(input);
       const afterCall = Date.now();
 
       expect(npqps.nonPaginatedQuery).toHaveBeenCalledTimes(1);
 
-      const calledWith = npqps.nonPaginatedQuery.mock.calls[0][0];
+      const [calledWith] = npqps.nonPaginatedQuery.mock.calls[0] as [
+        {
+          gatewayId?: string[];
+          from: string;
+          to: string;
+        },
+      ];
 
-      expect(calledWith.gatewayId).toBe('gw-1');
+      expect(calledWith.gatewayId).toEqual(['gw-1']);
       expect(typeof calledWith.from).toBe('string');
       expect(typeof calledWith.to).toBe('string');
 
@@ -51,22 +59,34 @@ describe('SensorService', () => {
     });
 
     it('should return unique sensors from measures', async () => {
-      npqps.nonPaginatedQuery.mockResolvedValue([
+      const measures: MeasureEntity[] = [
         {
+          tenantId: 'tenant-1',
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
           sensorType: 'temperature',
           time: '2026-03-20T10:00:00.000Z',
+          encryptedData: 'a',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
         {
+          tenantId: 'tenant-1',
           gatewayId: 'gw-1',
           sensorId: 'sensor-2',
           sensorType: 'humidity',
           time: '2026-03-20T10:01:00.000Z',
+          encryptedData: 'b',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
-      ]);
+      ];
 
-      const result = await service.getSensors(input as any);
+      npqps.nonPaginatedQuery.mockResolvedValue(measures);
+
+      const result = await service.getSensors(input);
 
       expect(result).toEqual([
         {
@@ -85,28 +105,45 @@ describe('SensorService', () => {
     });
 
     it('should merge duplicate sensors and keep the most recent lastSeen', async () => {
-      npqps.nonPaginatedQuery.mockResolvedValue([
+      const measures: MeasureEntity[] = [
         {
+          tenantId: 'tenant-1',
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
           sensorType: 'temperature',
           time: '2026-03-20T10:00:00.000Z',
+          encryptedData: 'a',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
         {
+          tenantId: 'tenant-1',
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
           sensorType: 'temperature',
           time: '2026-03-20T10:05:00.000Z',
+          encryptedData: 'b',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
         {
+          tenantId: 'tenant-1',
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
           sensorType: 'temperature',
           time: '2026-03-20T10:03:00.000Z',
+          encryptedData: 'c',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
-      ]);
+      ];
 
-      const result = await service.getSensors(input as any);
+      npqps.nonPaginatedQuery.mockResolvedValue(measures);
+
+      const result = await service.getSensors(input);
 
       expect(result).toEqual([
         {
@@ -119,22 +156,34 @@ describe('SensorService', () => {
     });
 
     it('should treat same sensorId with different sensorType as different sensors', async () => {
-      npqps.nonPaginatedQuery.mockResolvedValue([
+      const measures: MeasureEntity[] = [
         {
+          tenantId: 'tenant-1',
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
           sensorType: 'temperature',
           time: '2026-03-20T10:00:00.000Z',
+          encryptedData: 'a',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
         {
+          tenantId: 'tenant-1',
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
           sensorType: 'humidity',
           time: '2026-03-20T10:01:00.000Z',
+          encryptedData: 'b',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
-      ]);
+      ];
 
-      const result = await service.getSensors(input as any);
+      npqps.nonPaginatedQuery.mockResolvedValue(measures);
+
+      const result = await service.getSensors(input);
 
       expect(result).toEqual([
         {
@@ -160,7 +209,7 @@ describe('SensorService', () => {
         },
       });
 
-      await expect(service.getSensors(input as any)).rejects.toBeInstanceOf(
+      await expect(service.getSensors(input)).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
     });
@@ -173,7 +222,7 @@ describe('SensorService', () => {
         },
       });
 
-      await expect(service.getSensors(input as any)).rejects.toBeInstanceOf(
+      await expect(service.getSensors(input)).rejects.toBeInstanceOf(
         ForbiddenException,
       );
     });
@@ -186,7 +235,7 @@ describe('SensorService', () => {
         },
       });
 
-      await expect(service.getSensors(input as any)).rejects.toBeInstanceOf(
+      await expect(service.getSensors(input)).rejects.toBeInstanceOf(
         NotFoundException,
       );
     });
@@ -195,7 +244,7 @@ describe('SensorService', () => {
       const error = new Error('Unexpected error');
       npqps.nonPaginatedQuery.mockRejectedValue(error);
 
-      await expect(service.getSensors(input as any)).rejects.toThrow(
+      await expect(service.getSensors(input)).rejects.toThrow(
         'Unexpected error',
       );
     });

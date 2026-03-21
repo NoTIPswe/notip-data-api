@@ -11,6 +11,19 @@ import { sensorModel } from '../models/sensor.model';
 import { NpQueryPersistenceInput } from '../interfaces/np-query-persistence.input';
 import { MeasureEntity } from '../entity/measure.entity';
 
+type ServiceError = {
+  status?: number;
+  message?: string;
+  response?: {
+    status?: number;
+    data?: unknown;
+  };
+};
+
+function isServiceError(error: unknown): error is ServiceError {
+  return typeof error === 'object' && error !== null;
+}
+
 @Injectable()
 export class SensorService {
   constructor(
@@ -30,25 +43,28 @@ export class SensorService {
     try {
       const measures = await this.npqps.nonPaginatedQuery(queryInput);
       return this.toSensorModels(measures);
-    } catch (error: any) {
-      const status = error?.status ?? error?.response?.status;
+    } catch (error: unknown) {
+      if (isServiceError(error)) {
+        const status = error.status ?? error.response?.status;
+        const responseData = error.response?.data;
 
-      if (status === 401) {
-        throw new UnauthorizedException(
-          error?.response?.data ?? error?.message ?? 'Unauthorized',
-        );
-      }
+        if (status === 401) {
+          throw new UnauthorizedException(
+            responseData ?? error.message ?? 'Unauthorized',
+          );
+        }
 
-      if (status === 403) {
-        throw new ForbiddenException(
-          error?.response?.data ?? error?.message ?? 'Forbidden',
-        );
-      }
+        if (status === 403) {
+          throw new ForbiddenException(
+            responseData ?? error.message ?? 'Forbidden',
+          );
+        }
 
-      if (status === 404) {
-        throw new NotFoundException(
-          error?.response?.data ?? error?.message ?? 'Not found',
-        );
+        if (status === 404) {
+          throw new NotFoundException(
+            responseData ?? error.message ?? 'Not found',
+          );
+        }
       }
 
       throw error;
@@ -77,6 +93,7 @@ export class SensorService {
         existing.lastSeen = measure.time;
       }
     }
+
     return Array.from(sensorsMap.values());
   }
 }

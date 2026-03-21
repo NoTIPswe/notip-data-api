@@ -6,6 +6,12 @@ import {
 import { MeasureService } from './measure.service';
 import { MeasurePersistenceService } from './measure.persistence.service';
 import { MeasureMapper } from './../measure.mapper';
+import { QueryInput } from '../interfaces/query.input';
+import { PaginatedQuery } from '../interfaces/paginated-query';
+import { PaginatedQueryModel } from '../models/paginated-query.model';
+import { ExportInput } from '../interfaces/export.input';
+import { MeasureEntity } from '../entity/measure.entity';
+import { EncryptedEnvelopeModel } from '../models/encrypted-envelope.model';
 
 describe('MeasureService', () => {
   let service: MeasureService;
@@ -25,35 +31,62 @@ describe('MeasureService', () => {
   });
 
   describe('query', () => {
-    const input = {
-      gatewayId: 'gw-1',
-      sensorId: 'sensor-1',
-      sensorType: 'temperature',
+    const input: QueryInput = {
+      gatewayId: ['gw-1'],
+      sensorId: ['sensor-1'],
+      sensorType: ['temperature'],
       from: '2024-01-01T00:00:00Z',
       to: '2024-01-01T01:00:00Z',
       cursor: 'cursor-1',
       limit: 100,
     };
+    const paginatedQuerySpy = jest.spyOn(mps, 'paginatedQuery');
 
     it('should call paginatedQuery and map the result', async () => {
-      const persistenceResult = {
-        items: [{ id: '1' }],
+      const persistenceResult: PaginatedQuery = {
+        data: [
+          {
+            time: '2024-01-01T00:30:00Z',
+            tenantId: 'tenant-1',
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            encryptedData: 'abc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        ],
         nextCursor: 'next-cursor',
+        hasMore: true,
       };
 
-      const mappedResult = {
-        data: [{ id: '1' }],
-        cursor: 'next-cursor',
+      const mappedResult: PaginatedQueryModel = {
+        data: [
+          {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2024-01-01T00:30:00Z',
+            encryptedData: 'abc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        ],
+        nextCursor: 'next-cursor',
+        hasMore: true,
       };
 
-      mps.paginatedQuery.mockResolvedValue(persistenceResult as any);
-      jest
+      mps.paginatedQuery.mockResolvedValue(persistenceResult);
+
+      const mapperSpy = jest
         .spyOn(MeasureMapper, 'toPaginatedQueryModel')
-        .mockReturnValue(mappedResult as any);
+        .mockReturnValue(mappedResult);
 
-      const result = await service.query(input as any);
+      const result = await service.query(input);
 
-      expect(mps.paginatedQuery).toHaveBeenCalledWith({
+      expect(paginatedQuerySpy).toHaveBeenCalledWith({
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
@@ -62,9 +95,7 @@ describe('MeasureService', () => {
         cursor: input.cursor,
         limit: input.limit,
       });
-      expect(MeasureMapper.toPaginatedQueryModel).toHaveBeenCalledWith(
-        persistenceResult,
-      );
+      expect(mapperSpy).toHaveBeenCalledWith(persistenceResult);
       expect(result).toEqual(mappedResult);
     });
 
@@ -78,7 +109,7 @@ describe('MeasureService', () => {
 
       mps.paginatedQuery.mockRejectedValue(error);
 
-      await expect(service.query(input as any)).rejects.toBeInstanceOf(
+      await expect(service.query(input)).rejects.toBeInstanceOf(
         BadRequestException,
       );
     });
@@ -93,7 +124,7 @@ describe('MeasureService', () => {
 
       mps.paginatedQuery.mockRejectedValue(error);
 
-      await expect(service.query(input as any)).rejects.toBeInstanceOf(
+      await expect(service.query(input)).rejects.toBeInstanceOf(
         BadRequestException,
       );
     });
@@ -108,7 +139,7 @@ describe('MeasureService', () => {
 
       mps.paginatedQuery.mockRejectedValue(error);
 
-      await expect(service.query(input as any)).rejects.toBeInstanceOf(
+      await expect(service.query(input)).rejects.toBeInstanceOf(
         BadRequestException,
       );
     });
@@ -123,7 +154,7 @@ describe('MeasureService', () => {
 
       mps.paginatedQuery.mockRejectedValue(error);
 
-      await expect(service.query(input as any)).rejects.toBeInstanceOf(
+      await expect(service.query(input)).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
     });
@@ -138,7 +169,7 @@ describe('MeasureService', () => {
 
       mps.paginatedQuery.mockRejectedValue(error);
 
-      await expect(service.query(input as any)).rejects.toBeInstanceOf(
+      await expect(service.query(input)).rejects.toBeInstanceOf(
         ForbiddenException,
       );
     });
@@ -148,53 +179,65 @@ describe('MeasureService', () => {
 
       mps.paginatedQuery.mockRejectedValue(error);
 
-      await expect(service.query(input as any)).rejects.toThrow(
-        'Unexpected error',
-      );
+      await expect(service.query(input)).rejects.toThrow('Unexpected error');
     });
   });
 
   describe('export', () => {
-    const input = {
-      gatewayId: 'gw-1',
-      sensorId: 'sensor-1',
-      sensorType: 'temperature',
+    const input: ExportInput = {
+      gatewayId: ['gw-1'],
+      sensorId: ['sensor-1'],
+      sensorType: ['temperature'],
       from: '2024-01-01T00:00:00Z',
       to: '2024-01-01T01:00:00Z',
     };
 
+    const nonPaginatedQuerySpy = jest.spyOn(mps, 'nonPaginatedQuery');
+
     it('should call nonPaginatedQuery and map the result', async () => {
-      const persistenceResult = [
+      const persistenceResult: MeasureEntity[] = [
         {
+          time: '2024-01-01T00:30:00Z',
+          tenantId: 'tenant-1',
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
+          sensorType: 'temperature',
+          encryptedData: 'abc',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
       ];
 
-      const mappedResult = [
+      const mappedResult: EncryptedEnvelopeModel[] = [
         {
           gatewayId: 'gw-1',
           sensorId: 'sensor-1',
+          sensorType: 'temperature',
+          timestamp: '2024-01-01T00:30:00Z',
+          encryptedData: 'abc',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
         },
       ];
 
-      mps.nonPaginatedQuery.mockResolvedValue(persistenceResult as any);
-      jest
+      mps.nonPaginatedQuery.mockResolvedValue(persistenceResult);
+
+      const mapperSpy = jest
         .spyOn(MeasureMapper, 'toEncryptedEnvelopeModels')
-        .mockReturnValue(mappedResult as any);
+        .mockReturnValue(mappedResult);
 
-      const result = await service.export(input as any);
+      const result = await service.export(input);
 
-      expect(mps.nonPaginatedQuery).toHaveBeenCalledWith({
+      expect(nonPaginatedQuerySpy).toHaveBeenCalledWith({
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
         from: input.from,
         to: input.to,
       });
-      expect(MeasureMapper.toEncryptedEnvelopeModels).toHaveBeenCalledWith(
-        persistenceResult,
-      );
+      expect(mapperSpy).toHaveBeenCalledWith(persistenceResult);
       expect(result).toEqual(mappedResult);
     });
 
@@ -211,7 +254,7 @@ describe('MeasureService', () => {
 
       mps.nonPaginatedQuery.mockRejectedValue(error);
 
-      await expect(service.export(input as any)).rejects.toBeInstanceOf(
+      await expect(service.export(input)).rejects.toBeInstanceOf(
         BadRequestException,
       );
     });
@@ -229,7 +272,7 @@ describe('MeasureService', () => {
 
       mps.nonPaginatedQuery.mockRejectedValue(error);
 
-      await expect(service.export(input as any)).rejects.toBeInstanceOf(
+      await expect(service.export(input)).rejects.toBeInstanceOf(
         BadRequestException,
       );
     });
@@ -244,7 +287,7 @@ describe('MeasureService', () => {
 
       mps.nonPaginatedQuery.mockRejectedValue(error);
 
-      await expect(service.export(input as any)).rejects.toBeInstanceOf(
+      await expect(service.export(input)).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
     });
@@ -259,7 +302,7 @@ describe('MeasureService', () => {
 
       mps.nonPaginatedQuery.mockRejectedValue(error);
 
-      await expect(service.export(input as any)).rejects.toBeInstanceOf(
+      await expect(service.export(input)).rejects.toBeInstanceOf(
         ForbiddenException,
       );
     });
@@ -269,9 +312,7 @@ describe('MeasureService', () => {
 
       mps.nonPaginatedQuery.mockRejectedValue(error);
 
-      await expect(service.export(input as any)).rejects.toThrow(
-        'Unexpected error',
-      );
+      await expect(service.export(input)).rejects.toThrow('Unexpected error');
     });
   });
 });

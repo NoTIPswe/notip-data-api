@@ -15,7 +15,6 @@ export class StreamListenerService {
    * Espone uno stream filtrato al controller.
    */
   stream(input: StreamInput): Observable<EncryptedEnvelopeModel> {
-    
     // if (this.isUnauthorized(input)) {
     //   throw new UnauthorizedException('Unauthorized');
     // }
@@ -23,7 +22,6 @@ export class StreamListenerService {
     // if (this.isForbidden(input)) {
     //   throw new ForbiddenException('Forbidden');
     // }    return this.listenToSource(input).pipe(
-
 
     return this.listenToSource().pipe(
       filter((event) => this.matchesFilters(event, input)),
@@ -42,9 +40,9 @@ export class StreamListenerService {
     return new Observable<EncryptedEnvelopeModel>((subscriber) => {
       const interval = setInterval(() => {
         //if (this.isTokenExpired(input)) {
-          clearInterval(interval);
-          subscriber.error(new UnauthorizedException('Token expired'));
-          return;
+        clearInterval(interval);
+        subscriber.error(new UnauthorizedException('Token expired'));
+        return;
         //}
 
         subscriber.next({
