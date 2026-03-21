@@ -1,7 +1,7 @@
 import {
   Injectable,
   UnauthorizedException,
-  ForbiddenException,
+  //ForbiddenException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -15,15 +15,17 @@ export class StreamListenerService {
    * Espone uno stream filtrato al controller.
    */
   stream(input: StreamInput): Observable<EncryptedEnvelopeModel> {
-    if (this.isUnauthorized(input)) {
-      throw new UnauthorizedException('Unauthorized');
-    }
+    
+    // if (this.isUnauthorized(input)) {
+    //   throw new UnauthorizedException('Unauthorized');
+    // }
 
-    if (this.isForbidden(input)) {
-      throw new ForbiddenException('Forbidden');
-    }
+    // if (this.isForbidden(input)) {
+    //   throw new ForbiddenException('Forbidden');
+    // }    return this.listenToSource(input).pipe(
 
-    return this.listenToSource(input).pipe(
+
+    return this.listenToSource().pipe(
       filter((event) => this.matchesFilters(event, input)),
     );
   }
@@ -33,15 +35,17 @@ export class StreamListenerService {
    *
    * ⚠️ ATTUALE: simulazione per sviluppo
    * 🔜 FUTURO: Kafka / MQTT / WebSocket / EventBus
+   *   private listenToSource(input: StreamInput): Observable<EncryptedEnvelopeModel> {
+
    */
-  private listenToSource(input: StreamInput): Observable<EncryptedEnvelopeModel> {
+  private listenToSource(): Observable<EncryptedEnvelopeModel> {
     return new Observable<EncryptedEnvelopeModel>((subscriber) => {
       const interval = setInterval(() => {
-        if (this.isTokenExpired(input)) {
+        //if (this.isTokenExpired(input)) {
           clearInterval(interval);
           subscriber.error(new UnauthorizedException('Token expired'));
           return;
-        }
+        //}
 
         subscriber.next({
           gatewayId: 'gw-1',
@@ -85,23 +89,23 @@ export class StreamListenerService {
    * Simulazione controllo 401.
    * Sostituire con validazione reale del token.
    */
-  private isUnauthorized(input: StreamInput): boolean {
-    return false;
-  }
+  // private isUnauthorized(input: StreamInput): boolean {
+  //   return false;
+  // }
 
-  /**
-   * Simulazione controllo 403.
-   * Sostituire con controllo reale dei permessi.
-   */
-  private isForbidden(input: StreamInput): boolean {
-    return false;
-  }
+  // /**
+  //  * Simulazione controllo 403.
+  //  * Sostituire con controllo reale dei permessi.
+  //  */
+  // private isForbidden(input: StreamInput): boolean {
+  //   return false;
+  // }
 
-  /**
-   * Simulazione token scaduto durante lo stream.
-   * Sostituire con controllo reale su exp / sessione / auth provider.
-   */
-  private isTokenExpired(input: StreamInput): boolean {
-    return false;
-  }
+  // /**
+  //  * Simulazione token scaduto durante lo stream.
+  //  * Sostituire con controllo reale su exp / sessione / auth provider.
+  //  */
+  // private isTokenExpired(input: StreamInput): boolean {
+  //   return false;
+  // }
 }
