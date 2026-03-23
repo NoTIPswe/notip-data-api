@@ -1,0 +1,141 @@
+import { MeasurePersistenceService } from './measure.persistence.service';
+import { MeasureEntity } from '../entity/measure.entity';
+
+describe('MeasurePersistenceService', () => {
+  const createQueryBuilder = () => {
+    const qb = {
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest.fn(),
+    };
+
+    return qb;
+  };
+
+  it('builds a paginated query with all filters and returns next cursor', async () => {
+    const qb = createQueryBuilder();
+    const rows: MeasureEntity[] = [
+      {
+        time: '2026-03-23T09:58:00.000Z',
+        tenantId: 'tenant-1',
+        gatewayId: 'gw-1',
+        sensorId: 'sensor-1',
+        sensorType: 'temperature',
+        encryptedData: 'enc-1',
+        iv: 'iv-1',
+        authTag: 'tag-1',
+        keyVersion: 1,
+      },
+      {
+        time: '2026-03-23T09:55:00.000Z',
+        tenantId: 'tenant-1',
+        gatewayId: 'gw-1',
+        sensorId: 'sensor-1',
+        sensorType: 'temperature',
+        encryptedData: 'enc-2',
+        iv: 'iv-2',
+        authTag: 'tag-2',
+        keyVersion: 1,
+      },
+      {
+        time: '2026-03-23T09:54:00.000Z',
+        tenantId: 'tenant-1',
+        gatewayId: 'gw-1',
+        sensorId: 'sensor-1',
+        sensorType: 'temperature',
+        encryptedData: 'enc-3',
+        iv: 'iv-3',
+        authTag: 'tag-3',
+        keyVersion: 1,
+      },
+    ];
+    qb.getMany.mockResolvedValue(rows);
+
+    const repository = {
+      createQueryBuilder: jest.fn().mockReturnValue(qb),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    const result = await service.paginatedQuery({
+      gatewayId: ['gw-1'],
+      sensorId: ['sensor-1'],
+      sensorType: ['temperature'],
+      from: '2026-03-23T09:50:00.000Z',
+      to: '2026-03-23T10:00:00.000Z',
+      cursor: '2026-03-23T09:59:00.000Z',
+      limit: 2,
+    });
+
+    expect(repository.createQueryBuilder).toHaveBeenCalledWith('m');
+    expect(qb.andWhere).toHaveBeenNthCalledWith(1, 'm.gatewayId = :gatewayId', {
+      gatewayId: ['gw-1'],
+    });
+    expect(qb.andWhere).toHaveBeenNthCalledWith(2, 'm.sensorId = :sensorId', {
+      sensorId: ['sensor-1'],
+    });
+    expect(qb.andWhere).toHaveBeenNthCalledWith(
+      3,
+      'm.sensorType = :sensorType',
+      {
+        sensorType: ['temperature'],
+      },
+    );
+    expect(qb.andWhere).toHaveBeenNthCalledWith(4, 'm.time >= :from', {
+      from: '2026-03-23T09:50:00.000Z',
+    });
+    expect(qb.andWhere).toHaveBeenNthCalledWith(5, 'm.time <= :to', {
+      to: '2026-03-23T10:00:00.000Z',
+    });
+    expect(qb.andWhere).toHaveBeenNthCalledWith(6, 'm.time < :cursor', {
+      cursor: '2026-03-23T09:59:00.000Z',
+    });
+    expect(qb.orderBy).toHaveBeenCalledWith('m.time', 'DESC');
+    expect(qb.take).toHaveBeenCalledWith(3);
+    expect(result).toEqual({
+      data: rows.slice(0, 2),
+      nextCursor: '2026-03-23T09:55:00.000Z',
+      hasMore: true,
+    });
+  });
+
+  it('builds a non paginated query without optional filters', async () => {
+    const qb = createQueryBuilder();
+    const rows: MeasureEntity[] = [
+      {
+        time: '2026-03-23T09:58:00.000Z',
+        tenantId: 'tenant-1',
+        gatewayId: 'gw-1',
+        sensorId: 'sensor-1',
+        sensorType: 'temperature',
+        encryptedData: 'enc-1',
+        iv: 'iv-1',
+        authTag: 'tag-1',
+        keyVersion: 1,
+      },
+    ];
+    qb.getMany.mockResolvedValue(rows);
+
+    const repository = {
+      createQueryBuilder: jest.fn().mockReturnValue(qb),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    const result = await service.nonPaginatedQuery({
+      from: '2026-03-23T09:50:00.000Z',
+      to: '2026-03-23T10:00:00.000Z',
+    });
+
+    expect(qb.andWhere).toHaveBeenCalledTimes(2);
+    expect(qb.andWhere).toHaveBeenNthCalledWith(1, 'm.time >= :from', {
+      from: '2026-03-23T09:50:00.000Z',
+    });
+    expect(qb.andWhere).toHaveBeenNthCalledWith(2, 'm.time <= :to', {
+      to: '2026-03-23T10:00:00.000Z',
+    });
+    expect(qb.orderBy).toHaveBeenCalledWith('m.time', 'DESC');
+    expect(result).toEqual(rows);
+  });
+});

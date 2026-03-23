@@ -27,6 +27,58 @@ function isServiceError(error: unknown): error is ServiceError {
   return typeof error === 'object' && error !== null;
 }
 
+type ErrorDetails = {
+  status?: number;
+  code?: string;
+  message?: string;
+  responseData?: unknown;
+};
+
+function extractErrorDetails(error: ServiceError): ErrorDetails {
+  const responseData = error.response?.data;
+
+  return {
+    status: error.status ?? error.response?.status,
+    code:
+      error.code ??
+      (typeof responseData === 'object' &&
+      responseData !== null &&
+      'code' in responseData
+        ? (responseData as { code?: string }).code
+        : undefined),
+    message: error.message,
+    responseData,
+  };
+}
+
+function throwHttpException(
+  ExceptionType: typeof BadRequestException,
+  details: ErrorDetails,
+  fallbackMessage: string,
+): never;
+function throwHttpException(
+  ExceptionType: typeof UnauthorizedException,
+  details: ErrorDetails,
+  fallbackMessage: string,
+): never;
+function throwHttpException(
+  ExceptionType: typeof ForbiddenException,
+  details: ErrorDetails,
+  fallbackMessage: string,
+): never;
+function throwHttpException(
+  ExceptionType:
+    | typeof BadRequestException
+    | typeof UnauthorizedException
+    | typeof ForbiddenException,
+  details: ErrorDetails,
+  fallbackMessage: string,
+): never {
+  throw new ExceptionType(
+    details.responseData ?? details.message ?? fallbackMessage,
+  );
+}
+
 @Injectable()
 export class MeasureService {
   constructor(private readonly mps: MeasurePersistenceService) {}
@@ -47,42 +99,7 @@ export class MeasureService {
       return MeasureMapper.toPaginatedQueryModel(result);
     } catch (error: unknown) {
       if (isServiceError(error)) {
-        const status = error.status ?? error.response?.status;
-        const responseData = error.response?.data;
-        const code =
-          error.code ??
-          (typeof responseData === 'object' &&
-          responseData !== null &&
-          'code' in responseData
-            ? (responseData as { code?: string }).code
-            : undefined);
-
-        if (status === 400) {
-          throw new BadRequestException(
-            responseData ?? error.message ?? 'Bad request',
-          );
-        }
-
-        if (status === 401) {
-          throw new UnauthorizedException(
-            responseData ?? error.message ?? 'Unauthorized',
-          );
-        }
-
-        if (status === 403) {
-          throw new ForbiddenException(
-            responseData ?? error.message ?? 'Forbidden',
-          );
-        }
-
-        if (
-          code === 'QUERY_WINDOW_EXCEEDED' ||
-          code === 'QUERY_LIMIT_EXCEEDED'
-        ) {
-          throw new BadRequestException(
-            responseData ?? error.message ?? 'Bad request',
-          );
-        }
+        this.handleQueryError(error);
       }
 
       throw error;
@@ -103,36 +120,46 @@ export class MeasureService {
       return MeasureMapper.toEncryptedEnvelopeModels(result);
     } catch (error: unknown) {
       if (isServiceError(error)) {
-        const status = error.status ?? error.response?.status;
-        const responseData = error.response?.data;
-        const code =
-          error.code ??
-          (typeof responseData === 'object' &&
-          responseData !== null &&
-          'code' in responseData
-            ? (responseData as { code?: string }).code
-            : undefined);
-
-        if (status === 400 || code === 'EXPORT_WINDOW_EXCEEDED') {
-          throw new BadRequestException(
-            responseData ?? error.message ?? 'Bad request',
-          );
-        }
-
-        if (status === 401) {
-          throw new UnauthorizedException(
-            responseData ?? error.message ?? 'Unauthorized',
-          );
-        }
-
-        if (status === 403) {
-          throw new ForbiddenException(
-            responseData ?? error.message ?? 'Forbidden',
-          );
-        }
+        this.handleExportError(error);
       }
 
       throw error;
     }
+  }
+
+  private handleQueryError(error: ServiceError): never | void {
+    const details = extractErrorDetails(error);
+
+    if (details.status === 400 || this.isQueryLimitError(details.code)) {
+      throwHttpException(BadRequestException, details, 'Bad request');
+    }
+
+    if (details.status === 401) {
+      throwHttpException(UnauthorizedException, details, 'Unauthorized');
+    }
+
+    if (details.status === 403) {
+      throwHttpException(ForbiddenException, details, 'Forbidden');
+    }
+  }
+
+  private handleExportError(error: ServiceError): never | void {
+    const details = extractErrorDetails(error);
+
+    if (details.status === 400 || details.code === 'EXPORT_WINDOW_EXCEEDED') {
+      throwHttpException(BadRequestException, details, 'Bad request');
+    }
+
+    if (details.status === 401) {
+      throwHttpException(UnauthorizedException, details, 'Unauthorized');
+    }
+
+    if (details.status === 403) {
+      throwHttpException(ForbiddenException, details, 'Forbidden');
+    }
+  }
+
+  private isQueryLimitError(code?: string): boolean {
+    return code === 'QUERY_WINDOW_EXCEEDED' || code === 'QUERY_LIMIT_EXCEEDED';
   }
 }
