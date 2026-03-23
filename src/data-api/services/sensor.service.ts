@@ -10,6 +10,7 @@ import { getSensorsInput } from '../interfaces/get-sensors.input';
 import { sensorModel } from '../models/sensor.model';
 import { NpQueryPersistenceInput } from '../interfaces/np-query-persistence.input';
 import { MeasureEntity } from '../entity/measure.entity';
+import { NP_QUERY_PERSISTENCE } from '../interfaces/np-query-persistence.token';
 
 type ServiceError = {
   status?: number;
@@ -27,7 +28,7 @@ function isServiceError(error: unknown): error is ServiceError {
 @Injectable()
 export class SensorService {
   constructor(
-    @Inject('NpQueryPersistenceService')
+    @Inject(NP_QUERY_PERSISTENCE)
     private readonly npqps: NpQueryPersistenceService,
   ) {}
 

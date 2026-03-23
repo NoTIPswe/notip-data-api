@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { SensorService } from './services/sensor.service';
 import { SensorController } from './controller/sensor.controller';
 import { MeasurePersistenceService } from './services/measure.persistence.service';
+import { NP_QUERY_PERSISTENCE } from './interfaces/np-query-persistence.token';
 
 @Module({
   controllers: [SensorController],
@@ -9,7 +10,7 @@ import { MeasurePersistenceService } from './services/measure.persistence.servic
     SensorService,
     MeasurePersistenceService,
     {
-      provide: 'NpQueryPersistenceService',
+      provide: NP_QUERY_PERSISTENCE,
       useExisting: MeasurePersistenceService,
     },
   ],

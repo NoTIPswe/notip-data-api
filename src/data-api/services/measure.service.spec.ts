@@ -40,8 +40,6 @@ describe('MeasureService', () => {
       cursor: 'cursor-1',
       limit: 100,
     };
-    const paginatedQuerySpy = jest.spyOn(mps, 'paginatedQuery');
-
     it('should call paginatedQuery and map the result', async () => {
       const persistenceResult: PaginatedQuery = {
         data: [
@@ -86,7 +84,7 @@ describe('MeasureService', () => {
 
       const result = await service.query(input);
 
-      expect(paginatedQuerySpy).toHaveBeenCalledWith({
+      expect(mps.paginatedQuery).toHaveBeenCalledWith({
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
@@ -192,8 +190,6 @@ describe('MeasureService', () => {
       to: '2024-01-01T01:00:00Z',
     };
 
-    const nonPaginatedQuerySpy = jest.spyOn(mps, 'nonPaginatedQuery');
-
     it('should call nonPaginatedQuery and map the result', async () => {
       const persistenceResult: MeasureEntity[] = [
         {
@@ -230,7 +226,7 @@ describe('MeasureService', () => {
 
       const result = await service.export(input);
 
-      expect(nonPaginatedQuerySpy).toHaveBeenCalledWith({
+      expect(mps.nonPaginatedQuery).toHaveBeenCalledWith({
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
