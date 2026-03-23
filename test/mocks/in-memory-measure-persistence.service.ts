@@ -53,24 +53,22 @@ const MEASURES: MeasureEntity[] = [
 
 @Injectable()
 export class InMemoryMeasurePersistenceService {
-  async paginatedQuery(input: PQueryPersistenceInput): Promise<PaginatedQuery> {
+  paginatedQuery(input: PQueryPersistenceInput): Promise<PaginatedQuery> {
     const rows = this.filterMeasures(input);
     const data = rows.slice(0, input.limit);
 
-    return {
+    return Promise.resolve({
       data,
       hasMore: rows.length > input.limit,
       nextCursor:
         rows.length > input.limit && data.length > 0
           ? data[data.length - 1].time
           : undefined,
-    };
+    });
   }
 
-  async nonPaginatedQuery(
-    input: NpQueryPersistenceInput,
-  ): Promise<MeasureEntity[]> {
-    return this.filterMeasures(input);
+  nonPaginatedQuery(input: NpQueryPersistenceInput): Promise<MeasureEntity[]> {
+    return Promise.resolve(this.filterMeasures(input));
   }
 
   private filterMeasures(

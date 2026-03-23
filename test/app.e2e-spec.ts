@@ -23,13 +23,13 @@ describe('Data API integration', () => {
     jest.useRealTimers();
   });
 
-  const getRequest = () => request(app.getHttpAdapter().getInstance());
+  const getRequest = () =>
+    request(
+      app.getHttpAdapter().getInstance() as Parameters<typeof request>[0],
+    );
 
   it('/ (GET)', () => {
-    return getRequest()
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+    return getRequest().get('/').expect(200).expect('Hello World!');
   });
 
   it('/measures/query (GET) returns paginated measures from the in-memory mock', async () => {

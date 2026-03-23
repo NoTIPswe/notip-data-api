@@ -84,7 +84,7 @@ describe('MeasureService', () => {
 
       const result = await service.query(input);
 
-      expect(mps.paginatedQuery).toHaveBeenCalledWith({
+      expect(mps.paginatedQuery.mock.calls[0]?.[0]).toEqual({
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
@@ -226,7 +226,7 @@ describe('MeasureService', () => {
 
       const result = await service.export(input);
 
-      expect(mps.nonPaginatedQuery).toHaveBeenCalledWith({
+      expect(mps.nonPaginatedQuery.mock.calls[0]?.[0]).toEqual({
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
