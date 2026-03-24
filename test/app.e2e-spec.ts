@@ -46,22 +46,24 @@ describe('Data API integration', () => {
       ['temperature'],
     );
 
-    expect(response).toEqual({
-      data: [
-        {
-          gatewayId: 'gw-1',
-          sensorId: 'sensor-1',
-          sensorType: 'temperature',
-          timestamp: '2026-03-23T09:58:00.000Z',
-          encryptedData: 'enc-3',
-          iv: 'iv-3',
-          authTag: 'tag-3',
-          keyVersion: 1,
-        },
-      ],
-      nextCursor: '2026-03-23T09:58:00.000Z',
-      hasMore: true,
-    });
+    expect(response).toEqual([
+      {
+        data: [
+          {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T09:58:00.000Z',
+            encryptedData: 'enc-3',
+            iv: 'iv-3',
+            authTag: 'tag-3',
+            keyVersion: 1,
+          },
+        ],
+        nextCursor: '2026-03-23T09:58:00.000Z',
+        hasMore: true,
+      },
+    ]);
   });
 
   it('/measures/export (GET) returns all matching measures from the in-memory mock', async () => {

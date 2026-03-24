@@ -45,6 +45,37 @@ describe('MeasureMapper', () => {
     });
   });
 
+  it('maps paginated query models to dto array', () => {
+    expect(
+      MeasureMapper.toQueryResponseDtos([
+        {
+          data: [model],
+          nextCursor: 'cursor-1',
+          hasMore: true,
+        },
+      ]),
+    ).toEqual([
+      {
+        data: [model],
+        nextCursor: 'cursor-1',
+        hasMore: true,
+      },
+    ]);
+  });
+
+  it('maps a paginated query model with no data to dto', () => {
+    expect(
+      MeasureMapper.toQueryResponseDto({
+        nextCursor: 'cursor-1',
+        hasMore: false,
+      }),
+    ).toEqual({
+      data: undefined,
+      nextCursor: 'cursor-1',
+      hasMore: false,
+    });
+  });
+
   it('maps export models to dto array', () => {
     expect(MeasureMapper.toExportResponseDto([model])).toEqual([model]);
   });

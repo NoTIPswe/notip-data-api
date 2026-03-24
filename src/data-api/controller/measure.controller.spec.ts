@@ -92,11 +92,11 @@ describe('MeasureController', () => {
         hasMore: true,
       };
 
-      service.query.mockResolvedValue(queryModel);
+      service.query.mockResolvedValue([queryModel]);
 
       const mapperSpy = jest
-        .spyOn(MeasureMapper, 'toQueryResponseDto')
-        .mockReturnValue(queryResponseDto);
+        .spyOn(MeasureMapper, 'toQueryResponseDtos')
+        .mockReturnValue([queryResponseDto]);
 
       const result = await controller.query(
         from,
@@ -119,8 +119,8 @@ describe('MeasureController', () => {
         cursor,
       });
       expect(mapperSpy).toHaveBeenCalledTimes(1);
-      expect(mapperSpy).toHaveBeenCalledWith(queryModel);
-      expect(result).toEqual(queryResponseDto);
+      expect(mapperSpy).toHaveBeenCalledWith([queryModel]);
+      expect(result).toEqual([queryResponseDto]);
     });
 
     it('should use default limit = 1000 when limit is not provided', async () => {
@@ -139,11 +139,11 @@ describe('MeasureController', () => {
         hasMore: false,
       };
 
-      service.query.mockResolvedValue(queryModel);
+      service.query.mockResolvedValue([queryModel]);
 
       const mapperSpy = jest
-        .spyOn(MeasureMapper, 'toQueryResponseDto')
-        .mockReturnValue(queryResponseDto);
+        .spyOn(MeasureMapper, 'toQueryResponseDtos')
+        .mockReturnValue([queryResponseDto]);
 
       const result = await controller.query(
         from,
@@ -166,7 +166,7 @@ describe('MeasureController', () => {
         cursor: undefined,
       });
       expect(mapperSpy).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(queryResponseDto);
+      expect(result).toEqual([queryResponseDto]);
     });
   });
 

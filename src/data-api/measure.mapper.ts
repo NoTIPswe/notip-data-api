@@ -26,10 +26,16 @@ export class MeasureMapper {
 
   static toQueryResponseDto(model: PaginatedQueryModel): QueryResponseDto {
     return {
-      data: model.data.map((item) => this.toEncryptedEnvelopeDto(item)),
+      data: model.data?.map((item) => this.toEncryptedEnvelopeDto(item)),
       nextCursor: model.nextCursor,
       hasMore: model.hasMore,
     };
+  }
+
+  static toQueryResponseDtos(
+    models: PaginatedQueryModel[],
+  ): QueryResponseDto[] {
+    return models.map((model) => this.toQueryResponseDto(model));
   }
 
   static toExportResponseDto(
@@ -73,7 +79,7 @@ export class MeasureMapper {
 
   static toPaginatedQueryModel(result: PaginatedQuery): PaginatedQueryModel {
     return {
-      data: result.data.map((entity) => this.toEncryptedEnvelopeModel(entity)),
+      data: result.data?.map((entity) => this.toEncryptedEnvelopeModel(entity)),
       nextCursor: result.nextCursor,
       hasMore: result.hasMore,
     };

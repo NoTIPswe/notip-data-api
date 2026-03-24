@@ -26,7 +26,7 @@ export class MeasureController {
     @Query('sensorId') sensorId?: string[],
     @Query('sensorType') sensorType?: string[],
     @Query('cursor') cursor?: string,
-  ): Promise<QueryResponseDto> {
+  ): Promise<QueryResponseDto[]> {
     const input: QueryInput = {
       from,
       to,
@@ -38,7 +38,7 @@ export class MeasureController {
     };
 
     const queryModel = await this.ms.query(input);
-    return MeasureMapper.toQueryResponseDto(queryModel);
+    return MeasureMapper.toQueryResponseDtos(queryModel);
   }
 
   @Sse('stream')

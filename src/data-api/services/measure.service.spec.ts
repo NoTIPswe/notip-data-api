@@ -94,7 +94,7 @@ describe('MeasureService', () => {
         limit: input.limit,
       });
       expect(mapperSpy).toHaveBeenCalledWith(persistenceResult);
-      expect(result).toEqual(mappedResult);
+      expect(result).toEqual([mappedResult]);
     });
 
     it('should throw BadRequestException when limit is greater than 1000', async () => {
