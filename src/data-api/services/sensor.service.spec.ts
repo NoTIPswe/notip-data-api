@@ -26,7 +26,7 @@ describe('SensorService', () => {
 
   describe('getSensors', () => {
     const input: getSensorsInput = {
-      gatewayId: ['gw-1'],
+      gatewayId: 'gw-1',
     };
 
     it('should call nonPaginatedQuery with gatewayId and a 10-minute window', async () => {

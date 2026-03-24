@@ -1,10 +1,15 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
+import { AppController } from '../src/app.controller';
+import { MeasureController } from '../src/data-api/controller/measure.controller';
+import { SensorController } from '../src/data-api/controller/sensor.controller';
 import { IntegrationTestAppModule } from './integration-test-app.module';
 
 describe('Data API integration', () => {
   let app: INestApplication;
+  let appController: AppController;
+  let measureController: MeasureController;
+  let sensorController: SensorController;
 
   beforeAll(async () => {
     jest.useFakeTimers();
@@ -16,6 +21,10 @@ describe('Data API integration', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+
+    appController = moduleFixture.get<AppController>(AppController);
+    measureController = moduleFixture.get<MeasureController>(MeasureController);
+    sensorController = moduleFixture.get<SensorController>(SensorController);
   });
 
   afterAll(async () => {
@@ -23,29 +32,21 @@ describe('Data API integration', () => {
     jest.useRealTimers();
   });
 
-  const getRequest = () =>
-    request(
-      app.getHttpAdapter().getInstance() as Parameters<typeof request>[0],
-    );
-
   it('/ (GET)', () => {
-    return getRequest().get('/').expect(200).expect('Hello World!');
+    expect(appController.getHello()).toBe('Hello World!');
   });
 
   it('/measures/query (GET) returns paginated measures from the in-memory mock', async () => {
-    const response = await getRequest()
-      .get('/measures/query')
-      .query({
-        from: '2026-03-23T09:50:00.000Z',
-        to: '2026-03-23T10:00:00.000Z',
-        gatewayId: 'gw-1',
-        sensorId: 'sensor-1',
-        sensorType: 'temperature',
-        limit: 1,
-      })
-      .expect(200);
+    const response = await measureController.query(
+      '2026-03-23T09:50:00.000Z',
+      '2026-03-23T10:00:00.000Z',
+      '1',
+      ['gw-1'],
+      ['sensor-1'],
+      ['temperature'],
+    );
 
-    expect(response.body).toEqual({
+    expect(response).toEqual({
       data: [
         {
           gatewayId: 'gw-1',
@@ -64,16 +65,13 @@ describe('Data API integration', () => {
   });
 
   it('/measures/export (GET) returns all matching measures from the in-memory mock', async () => {
-    const response = await getRequest()
-      .get('/measures/export')
-      .query({
-        from: '2026-03-23T09:50:00.000Z',
-        to: '2026-03-23T10:00:00.000Z',
-        gatewayId: 'gw-1',
-      })
-      .expect(200);
+    const response = await measureController.export(
+      '2026-03-23T09:50:00.000Z',
+      '2026-03-23T10:00:00.000Z',
+      ['gw-1'],
+    );
 
-    expect(response.body).toEqual([
+    expect(response).toEqual([
       {
         gatewayId: 'gw-1',
         sensorId: 'sensor-1',
@@ -108,73 +106,56 @@ describe('Data API integration', () => {
   });
 
   it('/measures/query (GET) rejects requests with limit greater than 1000', async () => {
-    const response = await getRequest()
-      .get('/measures/query')
-      .query({
-        from: '2026-03-23T09:50:00.000Z',
-        to: '2026-03-23T10:00:00.000Z',
-        limit: 1001,
-      })
-      .expect(400);
-
-    expect(response.body).toEqual({
-      message: {
+    await expect(
+      measureController.query(
+        '2026-03-23T09:50:00.000Z',
+        '2026-03-23T10:00:00.000Z',
+        '1001',
+      ),
+    ).rejects.toMatchObject({
+      response: {
         code: 'QUERY_LIMIT_EXCEEDED',
         message: 'limit must be less than or equal to 1000',
       },
-      error: 'Bad Request',
-      statusCode: 400,
+      status: 400,
     });
   });
 
   it('/measures/query (GET) rejects requests with a window greater than 24 hours', async () => {
-    const response = await getRequest()
-      .get('/measures/query')
-      .query({
-        from: '2026-03-22T09:59:59.000Z',
-        to: '2026-03-23T10:00:00.000Z',
-        limit: 1000,
-      })
-      .expect(400);
-
-    expect(response.body).toEqual({
-      message: {
+    await expect(
+      measureController.query(
+        '2026-03-22T09:59:59.000Z',
+        '2026-03-23T10:00:00.000Z',
+        '1000',
+      ),
+    ).rejects.toMatchObject({
+      response: {
         code: 'QUERY_WINDOW_EXCEEDED',
         message: 'time window must be less than or equal to 24 hours',
       },
-      error: 'Bad Request',
-      statusCode: 400,
+      status: 400,
     });
   });
 
   it('/measures/export (GET) rejects requests with a window greater than 24 hours', async () => {
-    const response = await getRequest()
-      .get('/measures/export')
-      .query({
-        from: '2026-03-22T09:59:59.000Z',
-        to: '2026-03-23T10:00:00.000Z',
-      })
-      .expect(400);
-
-    expect(response.body).toEqual({
-      message: {
+    await expect(
+      measureController.export(
+        '2026-03-22T09:59:59.000Z',
+        '2026-03-23T10:00:00.000Z',
+      ),
+    ).rejects.toMatchObject({
+      response: {
         code: 'EXPORT_WINDOW_EXCEEDED',
         message: 'time window must be less than or equal to 24 hours',
       },
-      error: 'Bad Request',
-      statusCode: 400,
+      status: 400,
     });
   });
 
   it('/sensor (GET) returns unique sensors with the latest lastSeen', async () => {
-    const response = await getRequest()
-      .get('/sensor')
-      .query({
-        gatewayId: 'gw-1',
-      })
-      .expect(200);
+    const response = await sensorController.getSensors('gw-1');
 
-    expect(response.body).toEqual([
+    expect(response).toEqual([
       {
         gatewayId: 'gw-1',
         sensorId: 'sensor-1',

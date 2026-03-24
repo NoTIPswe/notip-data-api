@@ -10,7 +10,7 @@ export class SensorController {
 
   @Get()
   async getSensors(
-    @Query('gatewayId') gatewayId?: string[],
+    @Query('gatewayId') gatewayId?: string,
   ): Promise<SensorDto[]> {
     const input: getSensorsInput = {
       gatewayId,
