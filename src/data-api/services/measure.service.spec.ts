@@ -97,6 +97,39 @@ describe('MeasureService', () => {
       expect(result).toEqual(mappedResult);
     });
 
+    it('should throw BadRequestException when limit is greater than 1000', async () => {
+      await expect(
+        service.query({
+          ...input,
+          limit: 1001,
+        }),
+      ).rejects.toEqual(
+        new BadRequestException({
+          code: 'QUERY_LIMIT_EXCEEDED',
+          message: 'limit must be less than or equal to 1000',
+        }),
+      );
+
+      expect(mps.paginatedQuery).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when query window exceeds 24 hours', async () => {
+      await expect(
+        service.query({
+          ...input,
+          from: '2024-01-01T00:00:00Z',
+          to: '2024-01-02T00:00:01Z',
+        }),
+      ).rejects.toEqual(
+        new BadRequestException({
+          code: 'QUERY_WINDOW_EXCEEDED',
+          message: 'time window must be less than or equal to 24 hours',
+        }),
+      );
+
+      expect(mps.paginatedQuery).not.toHaveBeenCalled();
+    });
+
     it('should throw BadRequestException on status 400', async () => {
       const error = {
         status: 400,
@@ -235,6 +268,23 @@ describe('MeasureService', () => {
       });
       expect(mapperSpy).toHaveBeenCalledWith(persistenceResult);
       expect(result).toEqual(mappedResult);
+    });
+
+    it('should throw BadRequestException when export window exceeds 24 hours', async () => {
+      await expect(
+        service.export({
+          ...input,
+          from: '2024-01-01T00:00:00Z',
+          to: '2024-01-02T00:00:01Z',
+        }),
+      ).rejects.toEqual(
+        new BadRequestException({
+          code: 'EXPORT_WINDOW_EXCEEDED',
+          message: 'time window must be less than or equal to 24 hours',
+        }),
+      );
+
+      expect(mps.nonPaginatedQuery).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException on status 400', async () => {

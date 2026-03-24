@@ -107,6 +107,65 @@ describe('Data API integration', () => {
     ]);
   });
 
+  it('/measures/query (GET) rejects requests with limit greater than 1000', async () => {
+    const response = await getRequest()
+      .get('/measures/query')
+      .query({
+        from: '2026-03-23T09:50:00.000Z',
+        to: '2026-03-23T10:00:00.000Z',
+        limit: 1001,
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      message: {
+        code: 'QUERY_LIMIT_EXCEEDED',
+        message: 'limit must be less than or equal to 1000',
+      },
+      error: 'Bad Request',
+      statusCode: 400,
+    });
+  });
+
+  it('/measures/query (GET) rejects requests with a window greater than 24 hours', async () => {
+    const response = await getRequest()
+      .get('/measures/query')
+      .query({
+        from: '2026-03-22T09:59:59.000Z',
+        to: '2026-03-23T10:00:00.000Z',
+        limit: 1000,
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      message: {
+        code: 'QUERY_WINDOW_EXCEEDED',
+        message: 'time window must be less than or equal to 24 hours',
+      },
+      error: 'Bad Request',
+      statusCode: 400,
+    });
+  });
+
+  it('/measures/export (GET) rejects requests with a window greater than 24 hours', async () => {
+    const response = await getRequest()
+      .get('/measures/export')
+      .query({
+        from: '2026-03-22T09:59:59.000Z',
+        to: '2026-03-23T10:00:00.000Z',
+      })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      message: {
+        code: 'EXPORT_WINDOW_EXCEEDED',
+        message: 'time window must be less than or equal to 24 hours',
+      },
+      error: 'Bad Request',
+      statusCode: 400,
+    });
+  });
+
   it('/sensor (GET) returns unique sensors with the latest lastSeen', async () => {
     const response = await getRequest()
       .get('/sensor')

@@ -13,6 +13,9 @@ import { PQueryPersistenceInput } from './../interfaces/p-query-persistence.inpu
 import { MeasureMapper } from './../measure.mapper';
 import { NpQueryPersistenceInput } from './../interfaces/np-query-persistence.input';
 
+const MAX_QUERY_LIMIT = 1000;
+const MAX_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 type ServiceError = {
   status?: number;
   code?: string;
@@ -84,6 +87,8 @@ export class MeasureService {
   constructor(private readonly mps: MeasurePersistenceService) {}
 
   async query(input: QueryInput): Promise<PaginatedQueryModel> {
+    this.validateQueryInput(input);
+
     const pInput: PQueryPersistenceInput = {
       gatewayId: input.gatewayId,
       sensorId: input.sensorId,
@@ -107,6 +112,8 @@ export class MeasureService {
   }
 
   async export(input: ExportInput): Promise<EncryptedEnvelopeModel[]> {
+    this.validateExportInput(input);
+
     const pInput: NpQueryPersistenceInput = {
       gatewayId: input.gatewayId,
       sensorId: input.sensorId,
@@ -161,5 +168,40 @@ export class MeasureService {
 
   private isQueryLimitError(code?: string): boolean {
     return code === 'QUERY_WINDOW_EXCEEDED' || code === 'QUERY_LIMIT_EXCEEDED';
+  }
+
+  private validateQueryInput(input: QueryInput): void {
+    if (input.limit > MAX_QUERY_LIMIT) {
+      throw new BadRequestException({
+        code: 'QUERY_LIMIT_EXCEEDED',
+        message: 'limit must be less than or equal to 1000',
+      });
+    }
+
+    this.validateWindow(input.from, input.to, 'QUERY_WINDOW_EXCEEDED');
+  }
+
+  private validateExportInput(input: ExportInput): void {
+    this.validateWindow(input.from, input.to, 'EXPORT_WINDOW_EXCEEDED');
+  }
+
+  private validateWindow(
+    from: string,
+    to: string,
+    code: 'QUERY_WINDOW_EXCEEDED' | 'EXPORT_WINDOW_EXCEEDED',
+  ): void {
+    const fromTime = new Date(from).getTime();
+    const toTime = new Date(to).getTime();
+
+    if (Number.isNaN(fromTime) || Number.isNaN(toTime)) {
+      return;
+    }
+
+    if (toTime - fromTime > MAX_WINDOW_MS) {
+      throw new BadRequestException({
+        code,
+        message: 'time window must be less than or equal to 24 hours',
+      });
+    }
   }
 }
