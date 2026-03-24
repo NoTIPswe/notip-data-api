@@ -110,7 +110,7 @@ describe('MeasureService', () => {
         }),
       );
 
-      expect(mps.paginatedQuery).not.toHaveBeenCalled();
+      expect(mps.paginatedQuery.mock.calls).toHaveLength(0);
     });
 
     it('should throw BadRequestException when query window exceeds 24 hours', async () => {
@@ -127,7 +127,7 @@ describe('MeasureService', () => {
         }),
       );
 
-      expect(mps.paginatedQuery).not.toHaveBeenCalled();
+      expect(mps.paginatedQuery.mock.calls).toHaveLength(0);
     });
 
     it('should throw BadRequestException on status 400', async () => {
@@ -284,7 +284,7 @@ describe('MeasureService', () => {
         }),
       );
 
-      expect(mps.nonPaginatedQuery).not.toHaveBeenCalled();
+      expect(mps.nonPaginatedQuery.mock.calls).toHaveLength(0);
     });
 
     it('should throw BadRequestException on status 400', async () => {
