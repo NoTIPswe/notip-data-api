@@ -43,8 +43,7 @@ export class MeasurePersistenceService implements NpQueryPersistenceService {
 
     const hasMore = rows.length > p.limit;
     const data = hasMore ? rows.slice(0, p.limit) : rows;
-    const nextCursor =
-      hasMore && data.length > 0 ? data[data.length - 1].time : undefined;
+    const nextCursor = hasMore ? data.at(-1)?.time : undefined;
 
     return {
       data,

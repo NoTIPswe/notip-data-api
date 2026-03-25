@@ -6,8 +6,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
-import { getSensorsInput } from '../interfaces/get-sensors.input';
-import { sensorModel } from '../models/sensor.model';
+import { GetSensorsInput } from '../interfaces/get-sensors.input';
+import { SensorModel } from '../models/sensor.model';
 import { NpQueryPersistenceInput } from '../interfaces/np-query-persistence.input';
 import { MeasureEntity } from '../entity/measure.entity';
 import { NP_QUERY_PERSISTENCE } from '../interfaces/np-query-persistence.token';
@@ -32,7 +32,7 @@ export class SensorService {
     private readonly npqps: NpQueryPersistenceService,
   ) {}
 
-  async getSensors(input: getSensorsInput): Promise<sensorModel[]> {
+  async getSensors(input: GetSensorsInput): Promise<SensorModel[]> {
     const now = new Date();
     const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
     const queryInput: NpQueryPersistenceInput = {
@@ -72,8 +72,8 @@ export class SensorService {
     }
   }
 
-  private toSensorModels(measures: MeasureEntity[]): sensorModel[] {
-    const sensorsMap = new Map<string, sensorModel>();
+  private toSensorModels(measures: MeasureEntity[]): SensorModel[] {
+    const sensorsMap = new Map<string, SensorModel>();
 
     for (const measure of measures) {
       const key = `${measure.gatewayId}::${measure.sensorId}::${measure.sensorType}`;

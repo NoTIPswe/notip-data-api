@@ -45,16 +45,16 @@ paths:
           description: Opaque cursor returned by a previous query page
           schema:
             type: string
-        - name: sensorType
+        - name: gatewayId
           required: false
           in: query
           description: >-
-            Repeat the parameter to filter by multiple sensor types, for example
-            ?sensorType=temperature&sensorType=humidity
+            Repeat the parameter to filter by multiple gateways, for example
+            ?gatewayId=gw-1&gatewayId=gw-2
           schema:
             example:
-              - temperature
-              - humidity
+              - gw-1
+              - gw-2
             type: array
             items:
               type: string
@@ -71,16 +71,16 @@ paths:
             type: array
             items:
               type: string
-        - name: gatewayId
+        - name: sensorType
           required: false
           in: query
           description: >-
-            Repeat the parameter to filter by multiple gateways, for example
-            ?gatewayId=gw-1&gatewayId=gw-2
+            Repeat the parameter to filter by multiple sensor types, for example
+            ?sensorType=temperature&sensorType=humidity
           schema:
             example:
-              - gw-1
-              - gw-2
+              - temperature
+              - humidity
             type: array
             items:
               type: string
@@ -121,14 +121,16 @@ paths:
         text/event-stream media type.
       operationId: MeasureController_stream
       parameters:
-        - name: sensorType
+        - name: gatewayId
           required: false
           in: query
-          description: Repeat the parameter to filter the stream by multiple sensor types
+          description: >-
+            Repeat the parameter to filter the stream by multiple gateways, for
+            example ?gatewayId=gw-1&gatewayId=gw-2
           schema:
             example:
-              - temperature
-              - humidity
+              - gw-1
+              - gw-2
             type: array
             items:
               type: string
@@ -143,16 +145,14 @@ paths:
             type: array
             items:
               type: string
-        - name: gatewayId
+        - name: sensorType
           required: false
           in: query
-          description: >-
-            Repeat the parameter to filter the stream by multiple gateways, for
-            example ?gatewayId=gw-1&gatewayId=gw-2
+          description: Repeat the parameter to filter the stream by multiple sensor types
           schema:
             example:
-              - gw-1
-              - gw-2
+              - temperature
+              - humidity
             type: array
             items:
               type: string
@@ -191,16 +191,16 @@ paths:
           schema:
             type: string
             format: date-time
-        - name: sensorType
+        - name: gatewayId
           required: false
           in: query
           description: >-
-            Repeat the parameter to filter by multiple sensor types, for example
-            ?sensorType=temperature&sensorType=humidity
+            Repeat the parameter to filter by multiple gateways, for example
+            ?gatewayId=gw-1&gatewayId=gw-2
           schema:
             example:
-              - temperature
-              - humidity
+              - gw-1
+              - gw-2
             type: array
             items:
               type: string
@@ -217,16 +217,16 @@ paths:
             type: array
             items:
               type: string
-        - name: gatewayId
+        - name: sensorType
           required: false
           in: query
           description: >-
-            Repeat the parameter to filter by multiple gateways, for example
-            ?gatewayId=gw-1&gatewayId=gw-2
+            Repeat the parameter to filter by multiple sensor types, for example
+            ?sensorType=temperature&sensorType=humidity
           schema:
             example:
-              - gw-1
-              - gw-2
+              - temperature
+              - humidity
             type: array
             items:
               type: string

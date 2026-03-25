@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { SensorService } from './sensor.service';
 import type { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
-import { getSensorsInput } from '../interfaces/get-sensors.input';
+import { GetSensorsInput } from '../interfaces/get-sensors.input';
 import { MeasureEntity } from '../entity/measure.entity';
 
 describe('SensorService', () => {
@@ -25,7 +25,7 @@ describe('SensorService', () => {
   });
 
   describe('getSensors', () => {
-    const input: getSensorsInput = {
+    const input: GetSensorsInput = {
       gatewayId: 'gw-1',
     };
 

@@ -6,7 +6,7 @@ import { MeasureEntity } from './entity/measure.entity';
 import { PaginatedQuery } from './interfaces/paginated-query';
 import { Observable, map } from 'rxjs';
 import { SensorDto } from './dto/sensor.dto';
-import { sensorModel } from './models/sensor.model';
+import { SensorModel } from './models/sensor.model';
 
 export class MeasureMapper {
   static toEncryptedEnvelopeDto(
@@ -85,7 +85,7 @@ export class MeasureMapper {
     };
   }
 
-  static toSensorDto(model: sensorModel): SensorDto {
+  static toSensorDto(model: SensorModel): SensorDto {
     return {
       sensorId: model.sensorId,
       sensorType: model.sensorType,
@@ -94,7 +94,7 @@ export class MeasureMapper {
     };
   }
 
-  static toSensorDtos(models: sensorModel[]): SensorDto[] {
+  static toSensorDtos(models: SensorModel[]): SensorDto[] {
     return models.map((model) => this.toSensorDto(model));
   }
 }
