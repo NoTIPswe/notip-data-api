@@ -1,7 +1,5 @@
 import { Controller, Query, Get } from '@nestjs/common';
-import {
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { SensorService } from '../services/sensor.service';
 import { SensorDto } from '../dto/sensor.dto';
 import { MeasureMapper } from '../measure.mapper';

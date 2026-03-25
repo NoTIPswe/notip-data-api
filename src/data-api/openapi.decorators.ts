@@ -132,7 +132,9 @@ export function ApiMeasureQueryDocs() {
       type: QueryResponseDto,
       isArray: true,
     }),
-    apiMeasureErrorResponses('Invalid query parameters or time window too large'),
+    apiMeasureErrorResponses(
+      'Invalid query parameters or time window too large',
+    ),
   );
 }
 
@@ -172,7 +174,9 @@ export function ApiMeasureExportDocs() {
       type: EncryptedEnvelopeDto,
       isArray: true,
     }),
-    apiMeasureErrorResponses('Invalid export parameters or time window too large'),
+    apiMeasureErrorResponses(
+      'Invalid export parameters or time window too large',
+    ),
   );
 }
 
