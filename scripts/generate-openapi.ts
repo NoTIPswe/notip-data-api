@@ -1,8 +1,6 @@
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 import { mkdirSync, writeFileSync } from 'node:fs';
-// @ts-expect-error -- js-yaml has no bundled types
-import * as yaml from 'js-yaml';
 import { AppController } from '../src/app.controller';
 import { AppService } from '../src/app.service';
 import { MeasureController } from '../src/data-api/controller/measure.controller';
@@ -10,6 +8,20 @@ import { SensorController } from '../src/data-api/controller/sensor.controller';
 import { MeasureService } from '../src/data-api/services/measure.service';
 import { SensorService } from '../src/data-api/services/sensor.service';
 import { StreamListenerService } from '../src/data-api/services/stream-listener.service';
+
+type YamlModule = {
+  dump: (
+    obj: unknown,
+    options?: {
+      noRefs?: boolean;
+      lineWidth?: number;
+    },
+  ) => string;
+};
+
+// `require` keeps this script independent from ambient type packages.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const yaml = require('js-yaml') as YamlModule;
 
 const OUTPUT_DIR = 'api-contracts/openapi';
 const OUTPUT_FILE = `${OUTPUT_DIR}/openapi.yaml`;
