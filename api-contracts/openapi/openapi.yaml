@@ -1,0 +1,154 @@
+openapi: 3.0.0
+paths:
+  /:
+    get:
+      operationId: AppController_getHello
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+        - App
+  /measures/query:
+    get:
+      operationId: MeasureController_query
+      parameters:
+        - name: from
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: to
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: limit
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: gatewayId
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: sensorId
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: sensorType
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: cursor
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+        - Measure
+  /measures/stream:
+    get:
+      operationId: MeasureController_stream
+      parameters:
+        - name: gatewayId
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: sensorId
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: sensorType
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+        - Measure
+  /measures/export:
+    get:
+      operationId: MeasureController_export
+      parameters:
+        - name: from
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: to
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: gatewayId
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: sensorId
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: sensorType
+          required: true
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+        - Measure
+  /sensor:
+    get:
+      operationId: SensorController_getSensors
+      parameters:
+        - name: gatewayId
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+        - Sensor
+info:
+  title: NoTIP Data API
+  description: NoTIP Data API OpenAPI specification
+  version: 1.0.0
+  contact: {}
+tags: []
+servers: []
+components:
+  schemas: {}
