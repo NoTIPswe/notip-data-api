@@ -1,20 +1,46 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class EncryptedEnvelopeDto {
-  @ApiProperty({ name: 'gateway_id' })
+  @ApiProperty({
+    description: 'Gateway identifier that produced the measure',
+    example: 'gw-1',
+  })
   gatewayId: string;
-  @ApiProperty({ name: 'sensor_id' })
+  @ApiProperty({
+    description: 'Sensor identifier inside the gateway',
+    example: 'sensor-1',
+  })
   sensorId: string;
-  @ApiProperty({ name: 'sensor_type' })
+  @ApiProperty({
+    description: 'Sensor type',
+    example: 'temperature',
+  })
   sensorType: string;
-  @ApiProperty({ name: 'timestamp' })
+  @ApiProperty({
+    description: 'Time when the encrypted measure was recorded',
+    example: '2026-03-23T09:58:00.000Z',
+    format: 'date-time',
+  })
   timestamp: string;
-  @ApiProperty({ name: 'encrypted_data' })
+  @ApiProperty({
+    description: 'Encrypted payload',
+    example: 'enc-3',
+  })
   encryptedData: string;
-  @ApiProperty({ name: 'iv' })
+  @ApiProperty({
+    description: 'Initialization vector used for encryption',
+    example: 'iv-3',
+  })
   iv: string;
-  @ApiProperty({ name: 'auth_tag' })
+  @ApiProperty({
+    description: 'Authentication tag used for encryption',
+    example: 'tag-3',
+  })
   authTag: string;
-  @ApiProperty({ name: 'key_version', type: Number })
+  @ApiProperty({
+    description: 'Encryption key version',
+    example: 1,
+    type: Number,
+  })
   keyVersion: number;
 }

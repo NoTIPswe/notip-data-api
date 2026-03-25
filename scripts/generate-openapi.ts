@@ -1,6 +1,7 @@
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 import { mkdirSync, writeFileSync } from 'node:fs';
+// @ts-expect-error -- js-yaml has no bundled types
 import * as yaml from 'js-yaml';
 import { AppController } from '../src/app.controller';
 import { AppService } from '../src/app.service';

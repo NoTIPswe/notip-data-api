@@ -1,12 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SensorDto {
-  @ApiProperty({ name: 'sensor_id' })
+  @ApiProperty({
+    description: 'Sensor identifier',
+    example: 'sensor-1',
+  })
   sensorId: string;
-  @ApiProperty({ name: 'sensor_type' })
+  @ApiProperty({
+    description: 'Sensor type',
+    example: 'temperature',
+  })
   sensorType: string;
-  @ApiProperty({ name: 'gateway_id' })
+  @ApiProperty({
+    description: 'Gateway identifier',
+    example: 'gw-1',
+  })
   gatewayId: string;
-  @ApiProperty({ name: 'last_seen' })
+  @ApiProperty({
+    description: 'Timestamp of the latest measure seen for the sensor',
+    example: '2026-03-23T09:58:00.000Z',
+    format: 'date-time',
+  })
   lastSeen: string;
 }

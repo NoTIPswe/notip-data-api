@@ -168,6 +168,30 @@ describe('MeasureController', () => {
       expect(mapperSpy).toHaveBeenCalledTimes(1);
       expect(result).toEqual([queryResponseDto]);
     });
+
+    it('should normalize single-value filters into arrays', async () => {
+      service.query.mockResolvedValue([]);
+
+      await controller.query(
+        '2024-01-01T00:00:00Z',
+        '2024-01-02T00:00:00Z',
+        '10',
+        'gw-1' as unknown as string[],
+        's-1' as unknown as string[],
+        'temp' as unknown as string[],
+        undefined,
+      );
+
+      expect(serviceQueryMock).toHaveBeenCalledWith({
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        limit: 10,
+        gatewayId: ['gw-1'],
+        sensorId: ['s-1'],
+        sensorType: ['temp'],
+        cursor: undefined,
+      });
+    });
   });
 
   describe('export', () => {
@@ -262,6 +286,26 @@ describe('MeasureController', () => {
       });
       expect(mapperSpy).toHaveBeenCalledTimes(1);
       expect(result).toEqual(exportResponseDto);
+    });
+
+    it('should normalize single export filters into arrays', async () => {
+      service.export.mockResolvedValue([]);
+
+      await controller.export(
+        '2024-01-01T00:00:00Z',
+        '2024-01-02T00:00:00Z',
+        'gw-1' as unknown as string[],
+        's-1' as unknown as string[],
+        'temp' as unknown as string[],
+      );
+
+      expect(serviceExportMock).toHaveBeenCalledWith({
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        gatewayId: ['gw-1'],
+        sensorId: ['s-1'],
+        sensorType: ['temp'],
+      });
     });
   });
 });
