@@ -1,7 +1,6 @@
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
-import { mkdirSync, writeFileSync } from 'fs';
-// @ts-expect-error -- js-yaml has no bundled types
+import { mkdirSync, writeFileSync } from 'node:fs';
 import * as yaml from 'js-yaml';
 import { AppController } from '../src/app.controller';
 import { AppService } from '../src/app.service';
@@ -35,7 +34,6 @@ async function generateOpenApi(): Promise<void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  
   const yamlString = yaml.dump(document, { noRefs: true });
 
   mkdirSync(OUTPUT_DIR, { recursive: true });
