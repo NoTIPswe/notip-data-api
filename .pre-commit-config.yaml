@@ -29,13 +29,6 @@ repos:
         language: system
         pass_filenames: false
 
-      - id: fetch-contracts
-        name: Fetch external contracts
-        entry: bash -c 'npm run fetch:asyncapi -- --repo notipswe/notip-infra --tag main --file nats-contracts.yaml'
-        language: system
-        pass_filenames: false
-
-
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
     hooks:
