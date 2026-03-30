@@ -1,7 +1,7 @@
 describe('main bootstrap', () => {
   afterEach(() => {
     jest.resetModules();
-    delete process.env.PORT;
+    delete process.env.DATA_API_PORT;
   });
 
   it('creates the app and listens on the default port', async () => {
@@ -27,8 +27,8 @@ describe('main bootstrap', () => {
     expect(listen).toHaveBeenCalledWith(3000);
   });
 
-  it('uses the configured port when PORT is provided', async () => {
-    process.env.PORT = '4000';
+  it('uses the configured port when DATA_API_PORT is provided', async () => {
+    process.env.DATA_API_PORT = '4000';
 
     const listen = jest.fn().mockResolvedValue(undefined);
     const create = jest.fn().mockResolvedValue({ listen });
