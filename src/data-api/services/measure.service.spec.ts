@@ -130,6 +130,23 @@ describe('MeasureService', () => {
       expect(mps.paginatedQuery.mock.calls).toHaveLength(0);
     });
 
+    it('should throw BadRequestException when from is after to', async () => {
+      await expect(
+        service.query({
+          ...input,
+          from: '2024-01-01T02:00:00Z',
+          to: '2024-01-01T01:00:00Z',
+        }),
+      ).rejects.toEqual(
+        new BadRequestException({
+          code: 'QUERY_WINDOW_EXCEEDED',
+          message: 'from must be less than or equal to to',
+        }),
+      );
+
+      expect(mps.paginatedQuery.mock.calls).toHaveLength(0);
+    });
+
     it('should throw BadRequestException on status 400', async () => {
       const error = {
         status: 400,
@@ -281,6 +298,23 @@ describe('MeasureService', () => {
         new BadRequestException({
           code: 'EXPORT_WINDOW_EXCEEDED',
           message: 'time window must be less than or equal to 24 hours',
+        }),
+      );
+
+      expect(mps.nonPaginatedQuery.mock.calls).toHaveLength(0);
+    });
+
+    it('should throw BadRequestException when export from is after to', async () => {
+      await expect(
+        service.export({
+          ...input,
+          from: '2024-01-01T02:00:00Z',
+          to: '2024-01-01T01:00:00Z',
+        }),
+      ).rejects.toEqual(
+        new BadRequestException({
+          code: 'EXPORT_WINDOW_EXCEEDED',
+          message: 'from must be less than or equal to to',
         }),
       );
 
