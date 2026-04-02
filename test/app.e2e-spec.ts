@@ -107,17 +107,17 @@ describe('Data API integration', () => {
     ]);
   });
 
-  it('/measures/query (GET) rejects requests with limit greater than 1000', async () => {
+  it('/measures/query (GET) rejects requests with limit greater than or equal to 1000', async () => {
     await expect(
       measureController.query(
         '2026-03-23T09:50:00.000Z',
         '2026-03-23T10:00:00.000Z',
-        '1001',
+        '1000',
       ),
     ).rejects.toMatchObject({
       response: {
         code: 'QUERY_LIMIT_EXCEEDED',
-        message: 'limit must be less than or equal to 1000',
+        message: 'limit must be less than 1000',
       },
       status: 400,
     });
@@ -128,7 +128,7 @@ describe('Data API integration', () => {
       measureController.query(
         '2026-03-22T09:59:59.000Z',
         '2026-03-23T10:00:00.000Z',
-        '1000',
+        '999',
       ),
     ).rejects.toMatchObject({
       response: {

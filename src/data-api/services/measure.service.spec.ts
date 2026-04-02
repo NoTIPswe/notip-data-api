@@ -97,16 +97,16 @@ describe('MeasureService', () => {
       expect(result).toEqual([mappedResult]);
     });
 
-    it('should throw BadRequestException when limit is greater than 1000', async () => {
+    it('should throw BadRequestException when limit is greater than or equal to 1000', async () => {
       await expect(
         service.query({
           ...input,
-          limit: 1001,
+          limit: 1000,
         }),
       ).rejects.toEqual(
         new BadRequestException({
           code: 'QUERY_LIMIT_EXCEEDED',
-          message: 'limit must be less than or equal to 1000',
+          message: 'limit must be less than 1000',
         }),
       );
 

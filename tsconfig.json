@@ -22,7 +22,6 @@
     "resolvePackageJsonExports": true,
     /* Build Performance & Output */
     "outDir": "./dist",
-    "baseUrl": "./",
     "sourceMap": true,
     "declaration": true,
     "incremental": true,

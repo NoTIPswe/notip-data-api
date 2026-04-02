@@ -69,17 +69,25 @@ describe('MeasurePersistenceService', () => {
     });
 
     expect(repository.createQueryBuilder).toHaveBeenCalledWith('m');
-    expect(qb.andWhere).toHaveBeenNthCalledWith(1, 'm.gatewayId = :gatewayId', {
-      gatewayId: ['gw-1'],
-    });
-    expect(qb.andWhere).toHaveBeenNthCalledWith(2, 'm.sensorId = :sensorId', {
-      sensorId: ['sensor-1'],
-    });
+    expect(qb.andWhere).toHaveBeenNthCalledWith(
+      1,
+      'm.gatewayId IN (:...gatewayIds)',
+      {
+        gatewayIds: ['gw-1'],
+      },
+    );
+    expect(qb.andWhere).toHaveBeenNthCalledWith(
+      2,
+      'm.sensorId IN (:...sensorIds)',
+      {
+        sensorIds: ['sensor-1'],
+      },
+    );
     expect(qb.andWhere).toHaveBeenNthCalledWith(
       3,
-      'm.sensorType = :sensorType',
+      'm.sensorType IN (:...sensorTypes)',
       {
-        sensorType: ['temperature'],
+        sensorTypes: ['temperature'],
       },
     );
     expect(qb.andWhere).toHaveBeenNthCalledWith(4, 'm.time >= :from', {
@@ -98,6 +106,47 @@ describe('MeasurePersistenceService', () => {
       nextCursor: '2026-03-23T09:55:00.000Z',
       hasMore: true,
     });
+  });
+
+  it('builds a non paginated query with array filters', async () => {
+    const qb = createQueryBuilder();
+    qb.getMany.mockResolvedValue([]);
+
+    const repository = {
+      createQueryBuilder: jest.fn().mockReturnValue(qb),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    await service.nonPaginatedQuery({
+      gatewayId: ['gw-1', 'gw-2'],
+      sensorId: ['sensor-1'],
+      sensorType: ['temperature', 'humidity'],
+      from: '2026-03-23T09:50:00.000Z',
+      to: '2026-03-23T10:00:00.000Z',
+    });
+
+    expect(qb.andWhere).toHaveBeenNthCalledWith(
+      1,
+      'm.gatewayId IN (:...gatewayIds)',
+      {
+        gatewayIds: ['gw-1', 'gw-2'],
+      },
+    );
+    expect(qb.andWhere).toHaveBeenNthCalledWith(
+      2,
+      'm.sensorId IN (:...sensorIds)',
+      {
+        sensorIds: ['sensor-1'],
+      },
+    );
+    expect(qb.andWhere).toHaveBeenNthCalledWith(
+      3,
+      'm.sensorType IN (:...sensorTypes)',
+      {
+        sensorTypes: ['temperature', 'humidity'],
+      },
+    );
   });
 
   it('builds a non paginated query without optional filters', async () => {

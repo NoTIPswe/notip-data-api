@@ -3,9 +3,39 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MeasureEntity } from './../entity/measure.entity';
 import { NpQueryPersistenceInput } from './../interfaces/np-query-persistence.input';
 import { PQueryPersistenceInput } from './../interfaces/p-query-persistence.input';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { PaginatedQuery } from './../interfaces/paginated-query';
 import { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
+
+function applyScalarFilter(
+  qb: SelectQueryBuilder<MeasureEntity>,
+  column: string,
+  parameterName: string,
+  value?: string,
+): void {
+  if (!value) {
+    return;
+  }
+
+  qb.andWhere(`${column} = :${parameterName}`, {
+    [parameterName]: value,
+  });
+}
+
+function applyArrayFilter(
+  qb: SelectQueryBuilder<MeasureEntity>,
+  column: string,
+  parameterName: string,
+  values?: string[],
+): void {
+  if (!values?.length) {
+    return;
+  }
+
+  qb.andWhere(`${column} IN (:...${parameterName})`, {
+    [parameterName]: values,
+  });
+}
 
 @Injectable()
 export class MeasurePersistenceService implements NpQueryPersistenceService {
@@ -17,17 +47,10 @@ export class MeasurePersistenceService implements NpQueryPersistenceService {
   async paginatedQuery(p: PQueryPersistenceInput): Promise<PaginatedQuery> {
     const qb = this.r.createQueryBuilder('m');
 
-    if (p.gatewayId) {
-      qb.andWhere('m.gatewayId = :gatewayId', { gatewayId: p.gatewayId });
-    }
-
-    if (p.sensorId) {
-      qb.andWhere('m.sensorId = :sensorId', { sensorId: p.sensorId });
-    }
-
-    if (p.sensorType) {
-      qb.andWhere('m.sensorType = :sensorType', { sensorType: p.sensorType });
-    }
+    applyScalarFilter(qb, 'm.tenantId', 'tenantId', p.tenantId);
+    applyArrayFilter(qb, 'm.gatewayId', 'gatewayIds', p.gatewayId);
+    applyArrayFilter(qb, 'm.sensorId', 'sensorIds', p.sensorId);
+    applyArrayFilter(qb, 'm.sensorType', 'sensorTypes', p.sensorType);
 
     qb.andWhere('m.time >= :from', { from: p.from });
     qb.andWhere('m.time <= :to', { to: p.to });
@@ -57,17 +80,10 @@ export class MeasurePersistenceService implements NpQueryPersistenceService {
   ): Promise<MeasureEntity[]> {
     const qb = this.r.createQueryBuilder('m');
 
-    if (n.gatewayId) {
-      qb.andWhere('m.gatewayId = :gatewayId', { gatewayId: n.gatewayId });
-    }
-
-    if (n.sensorId) {
-      qb.andWhere('m.sensorId = :sensorId', { sensorId: n.sensorId });
-    }
-
-    if (n.sensorType) {
-      qb.andWhere('m.sensorType = :sensorType', { sensorType: n.sensorType });
-    }
+    applyScalarFilter(qb, 'm.tenantId', 'tenantId', n.tenantId);
+    applyArrayFilter(qb, 'm.gatewayId', 'gatewayIds', n.gatewayId);
+    applyArrayFilter(qb, 'm.sensorId', 'sensorIds', n.sensorId);
+    applyArrayFilter(qb, 'm.sensorType', 'sensorTypes', n.sensorType);
 
     qb.andWhere('m.time >= :from', { from: n.from });
     qb.andWhere('m.time <= :to', { to: n.to });

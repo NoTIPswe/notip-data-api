@@ -75,6 +75,8 @@ export class InMemoryMeasurePersistenceService {
     input: NpQueryPersistenceInput & { cursor?: string },
   ): MeasureEntity[] {
     return MEASURES.filter((measure) => {
+      const matchesTenant =
+        !input.tenantId || input.tenantId === measure.tenantId;
       const matchesGateway =
         !input.gatewayId?.length || input.gatewayId.includes(measure.gatewayId);
       const matchesSensor =
@@ -87,6 +89,7 @@ export class InMemoryMeasurePersistenceService {
       const matchesCursor = !input.cursor || measure.time < input.cursor;
 
       return (
+        matchesTenant &&
         matchesGateway &&
         matchesSensor &&
         matchesSensorType &&
