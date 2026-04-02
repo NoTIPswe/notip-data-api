@@ -26,6 +26,7 @@ describe('SensorService', () => {
 
   describe('getSensors', () => {
     const input: GetSensorsInput = {
+      tenantId: 'tenant-1',
       gatewayId: 'gw-1',
     };
 
@@ -40,12 +41,14 @@ describe('SensorService', () => {
 
       const [calledWith] = npqps.nonPaginatedQuery.mock.calls[0] as [
         {
+          tenantId?: string;
           gatewayId?: string[];
           from: string;
           to: string;
         },
       ];
 
+      expect(calledWith.tenantId).toBe('tenant-1');
       expect(calledWith.gatewayId).toEqual(['gw-1']);
       expect(typeof calledWith.from).toBe('string');
       expect(typeof calledWith.to).toBe('string');

@@ -107,6 +107,7 @@ describe('MeasureController', () => {
         sensorId,
         sensorType,
         cursor,
+        'tenant-1',
       );
 
       expect(serviceQueryMock).toHaveBeenCalledTimes(1);
@@ -114,6 +115,7 @@ describe('MeasureController', () => {
         from,
         to,
         limit: 500,
+        tenantId: 'tenant-1',
         gatewayId,
         sensorId,
         sensorType,
@@ -154,6 +156,7 @@ describe('MeasureController', () => {
         undefined,
         undefined,
         undefined,
+        'tenant-1',
       );
 
       expect(serviceQueryMock).toHaveBeenCalledTimes(1);
@@ -161,6 +164,7 @@ describe('MeasureController', () => {
         from,
         to,
         limit: 999,
+        tenantId: 'tenant-1',
         gatewayId: undefined,
         sensorId: undefined,
         sensorType: undefined,
@@ -181,12 +185,14 @@ describe('MeasureController', () => {
         's-1' as unknown as string[],
         'temp' as unknown as string[],
         undefined,
+        'tenant-1',
       );
 
       expect(serviceQueryMock).toHaveBeenCalledWith({
         from: '2024-01-01T00:00:00Z',
         to: '2024-01-02T00:00:00Z',
         limit: 10,
+        tenantId: 'tenant-1',
         gatewayId: ['gw-1'],
         sensorId: ['s-1'],
         sensorType: ['temp'],
@@ -241,12 +247,14 @@ describe('MeasureController', () => {
         gatewayId,
         sensorId,
         sensorType,
+        'tenant-1',
       );
 
       expect(serviceExportMock).toHaveBeenCalledTimes(1);
       expect(serviceExportMock).toHaveBeenCalledWith({
         from,
         to,
+        tenantId: 'tenant-1',
         gatewayId,
         sensorId,
         sensorType,
@@ -275,12 +283,14 @@ describe('MeasureController', () => {
         undefined,
         undefined,
         undefined,
+        'tenant-1',
       );
 
       expect(serviceExportMock).toHaveBeenCalledTimes(1);
       expect(serviceExportMock).toHaveBeenCalledWith({
         from,
         to,
+        tenantId: 'tenant-1',
         gatewayId: undefined,
         sensorId: undefined,
         sensorType: undefined,
@@ -298,11 +308,13 @@ describe('MeasureController', () => {
         'gw-1' as unknown as string[],
         's-1' as unknown as string[],
         'temp' as unknown as string[],
+        'tenant-1',
       );
 
       expect(serviceExportMock).toHaveBeenCalledWith({
         from: '2024-01-01T00:00:00Z',
         to: '2024-01-02T00:00:00Z',
+        tenantId: 'tenant-1',
         gatewayId: ['gw-1'],
         sensorId: ['s-1'],
         sensorType: ['temp'],
@@ -348,6 +360,7 @@ describe('MeasureController', () => {
           'sensor-1' as never,
           'temperature' as never,
           '2026-03-23T09:50:00.000Z',
+          'tenant-1',
         ),
       );
 
@@ -388,6 +401,7 @@ describe('MeasureController', () => {
           undefined,
           undefined,
           undefined,
+          'tenant-1',
         ),
       );
 

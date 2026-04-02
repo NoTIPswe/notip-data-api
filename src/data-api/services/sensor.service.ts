@@ -36,6 +36,7 @@ export class SensorService {
     const now = new Date();
     const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
     const queryInput: NpQueryPersistenceInput = {
+      tenantId: input.tenantId,
       gatewayId: input.gatewayId ? [input.gatewayId] : undefined,
       from: tenMinutesAgo.toISOString(),
       to: now.toISOString(),
