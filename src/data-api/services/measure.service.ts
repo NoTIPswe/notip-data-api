@@ -13,7 +13,7 @@ import { PQueryPersistenceInput } from './../interfaces/p-query-persistence.inpu
 import { MeasureMapper } from './../measure.mapper';
 import { NpQueryPersistenceInput } from './../interfaces/np-query-persistence.input';
 
-const MAX_QUERY_LIMIT = 1000;
+const MAX_QUERY_LIMIT = 999;
 const MAX_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 type ServiceError = {
@@ -174,7 +174,7 @@ export class MeasureService {
     if (input.limit > MAX_QUERY_LIMIT) {
       throw new BadRequestException({
         code: 'QUERY_LIMIT_EXCEEDED',
-        message: 'limit must be less than or equal to 1000',
+        message: 'limit must be less than 1000',
       });
     }
 

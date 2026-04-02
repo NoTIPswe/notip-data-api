@@ -115,8 +115,8 @@ export function ApiMeasureQueryDocs() {
     ApiQuery({
       name: 'limit',
       required: false,
-      description: 'Page size. Defaults to 1000 and cannot exceed 1000.',
-      schema: { type: 'integer', minimum: 1, maximum: 1000, default: 1000 },
+      description: 'Page size. Defaults to 999 and must be less than 1000.',
+      schema: { type: 'integer', minimum: 1, maximum: 999, default: 999 },
       example: 100,
     }),
     apiMeasureFilterQueries('query'),
@@ -146,6 +146,14 @@ export function ApiMeasureStreamDocs() {
         'Streams matching encrypted measures as server-sent events using the text/event-stream media type.',
     }),
     ApiProduces('text/event-stream'),
+    ApiQuery({
+      name: 'since',
+      required: false,
+      description:
+        'Optional timestamp used to replay historical measures before switching to real-time events',
+      schema: { type: 'string', format: 'date-time' },
+      example: '2026-03-23T09:50:00.000Z',
+    }),
     apiMeasureFilterQueries('stream'),
     ApiOkResponse({
       description: 'Server-sent event stream containing encrypted measures',
@@ -153,7 +161,7 @@ export function ApiMeasureStreamDocs() {
         'text/event-stream': {
           schema: { type: 'string' },
           example:
-            'data: {"gatewayId":"gw-1","sensorId":"sensor-1","sensorType":"temperature","timestamp":"2026-03-23T09:58:00.000Z","encryptedData":"enc-3","iv":"iv-3","authTag":"tag-3","keyVersion":1}\n\n',
+            'data: {"gatewayId":"gw-1","sensorId":"sensor-1","sensorType":"temperature","timestamp":"2026-03-23T09:58:00.000Z","encryptedData":"enc-3","iv":"iv-3","authTag":"tag-3","keyVersion":1}\n\ndata: {"type":"error","reason":"token_expired"}\n\n',
         },
       },
     }),

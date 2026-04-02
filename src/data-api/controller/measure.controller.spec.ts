@@ -7,6 +7,7 @@ import { PaginatedQueryModel } from '../models/paginated-query.model';
 import { QueryResponseDto } from '../dto/query.response.dto';
 import { EncryptedEnvelopeModel } from '../models/encrypted-envelope.model';
 import { EncryptedEnvelopeDto } from '../dto/encrypted-envelope.dto';
+import { firstValueFrom, of } from 'rxjs';
 
 describe('MeasureController', () => {
   let controller: MeasureController;
@@ -123,7 +124,7 @@ describe('MeasureController', () => {
       expect(result).toEqual([queryResponseDto]);
     });
 
-    it('should use default limit = 1000 when limit is not provided', async () => {
+    it('should use default limit = 999 when limit is not provided', async () => {
       const from = '2024-01-01T00:00:00Z';
       const to = '2024-01-02T00:00:00Z';
 
@@ -159,7 +160,7 @@ describe('MeasureController', () => {
       expect(serviceQueryMock).toHaveBeenCalledWith({
         from,
         to,
-        limit: 1000,
+        limit: 999,
         gatewayId: undefined,
         sensorId: undefined,
         sensorType: undefined,
@@ -305,6 +306,96 @@ describe('MeasureController', () => {
         gatewayId: ['gw-1'],
         sensorId: ['s-1'],
         sensorType: ['temp'],
+      });
+    });
+  });
+
+  describe('stream', () => {
+    it('should pass filters, since and JWT context to the stream listener', async () => {
+      const payload = Buffer.from(
+        JSON.stringify({
+          tenantId: 'tenant-1',
+          exp: Math.floor(
+            new Date('2026-03-23T10:05:00.000Z').getTime() / 1000,
+          ),
+        }),
+      ).toString('base64url');
+
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'data',
+          data: {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T10:00:00.000Z',
+            encryptedData: 'enc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        }),
+      );
+
+      const result = await firstValueFrom(
+        controller.stream(
+          {
+            headers: {
+              authorization: `Bearer header.${payload}.signature`,
+            },
+          } as never,
+          'gw-1' as never,
+          'sensor-1' as never,
+          'temperature' as never,
+          '2026-03-23T09:50:00.000Z',
+        ),
+      );
+
+      expect(mockStreamListenerService.stream).toHaveBeenCalledWith({
+        gatewayId: ['gw-1'],
+        sensorId: ['sensor-1'],
+        sensorType: ['temperature'],
+        since: '2026-03-23T09:50:00.000Z',
+        tenantId: 'tenant-1',
+        tokenExpiresAt: new Date('2026-03-23T10:05:00.000Z').getTime(),
+      });
+      expect(result).toEqual({
+        data: {
+          gatewayId: 'gw-1',
+          sensorId: 'sensor-1',
+          sensorType: 'temperature',
+          timestamp: '2026-03-23T10:00:00.000Z',
+          encryptedData: 'enc',
+          iv: 'iv',
+          authTag: 'tag',
+          keyVersion: 1,
+        },
+      });
+    });
+
+    it('should map token_expired to an SSE error event', async () => {
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'error',
+          reason: 'token_expired',
+        }),
+      );
+
+      const result = await firstValueFrom(
+        controller.stream(
+          { headers: {} } as never,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+        ),
+      );
+
+      expect(result).toEqual({
+        data: {
+          type: 'error',
+          reason: 'token_expired',
+        },
       });
     });
   });

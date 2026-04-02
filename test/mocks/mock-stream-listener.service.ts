@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Observable, of } from 'rxjs';
 import { EncryptedEnvelopeModel } from '../../src/data-api/models/encrypted-envelope.model';
+import { StreamEmission } from '../../src/data-api/services/stream-listener.service';
 
 const STREAM_EVENT: EncryptedEnvelopeModel = {
   gatewayId: 'gw-1',
@@ -15,7 +16,10 @@ const STREAM_EVENT: EncryptedEnvelopeModel = {
 
 @Injectable()
 export class MockStreamListenerService {
-  stream(): Observable<EncryptedEnvelopeModel> {
-    return of(STREAM_EVENT);
+  stream(): Observable<StreamEmission> {
+    return of({
+      kind: 'data',
+      data: STREAM_EVENT,
+    });
   }
 }

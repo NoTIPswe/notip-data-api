@@ -15,7 +15,7 @@ export class ErrorResponseDto {
 
   @ApiPropertyOptional({
     description: 'Human-readable error message',
-    example: 'limit must be less than or equal to 1000',
+    example: 'limit must be less than 1000',
   })
   message?: string;
 
