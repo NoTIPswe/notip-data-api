@@ -52,7 +52,7 @@ function parseBearerToken(authorization?: string): string | undefined {
 }
 
 function decodeBase64Url(value: string): string | undefined {
-  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const normalized = value.replaceAll('-', '+').replaceAll('_', '/');
   const padding = (4 - (normalized.length % 4)) % 4;
 
   try {

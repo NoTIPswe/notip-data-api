@@ -18,13 +18,13 @@ type DataApiEnv = {
 
 function parseNumber(value: string | undefined, name: string): number {
   if (!value) {
-    throw new Error(`Missing environment variable: ${name}`);
+    throw new TypeError(`Missing environment variable: ${name}`);
   }
 
   const parsed = Number.parseInt(value, 10);
 
   if (Number.isNaN(parsed)) {
-    throw new Error(`Invalid numeric environment variable: ${name}`);
+    throw new TypeError(`Invalid numeric environment variable: ${name}`);
   }
 
   return parsed;

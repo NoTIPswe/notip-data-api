@@ -120,16 +120,17 @@ export class StreamListenerService {
     });
   }
 
-  private getTenantStream(tenantId?: string): Subject<EncryptedEnvelopeModel> {
-    const key = tenantId ?? 'anonymous';
-    const existing = this.tenantStreams.get(key);
+  private getTenantStream(
+    tenantId = 'anonymous',
+  ): Subject<EncryptedEnvelopeModel> {
+    const existing = this.tenantStreams.get(tenantId);
 
     if (existing) {
       return existing;
     }
 
     const subject = new Subject<EncryptedEnvelopeModel>();
-    this.tenantStreams.set(key, subject);
+    this.tenantStreams.set(tenantId, subject);
     return subject;
   }
 
