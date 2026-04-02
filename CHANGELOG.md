@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/NoTIPswe/notip-data-api/compare/v1.1.0...v1.2.0) (2026-04-02)
+
+
+### Bug Fixes
+
+* issue sonarqube ([648280c](https://github.com/NoTIPswe/notip-data-api/commit/648280ccb709b878b7e9c686aae61c1e91da86d0))
+
+
+### Features
+
+* added SSE feature and NATS connection ([579c6bf](https://github.com/NoTIPswe/notip-data-api/commit/579c6bf3a63a9d3982fc80c36ba093051ac53e35))
+
 # [1.1.0](https://github.com/NoTIPswe/notip-data-api/compare/v1.0.0...v1.1.0) (2026-03-31)
 
 
