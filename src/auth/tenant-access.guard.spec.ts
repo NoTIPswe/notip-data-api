@@ -25,7 +25,7 @@ describe('TenantAccessGuard', () => {
 
   beforeEach(() => {
     const configService = {
-      get: jest.fn().mockReturnValue('http://management-api:3000'),
+      get: jest.fn().mockReturnValue('https://management-api:3000'),
     } as unknown as ConfigService;
     guard = new TenantAccessGuard(configService);
     global.fetch = jest.fn();
