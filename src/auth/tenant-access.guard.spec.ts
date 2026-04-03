@@ -1,6 +1,7 @@
 import {
   ExecutionContext,
   ForbiddenException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -39,6 +40,16 @@ describe('TenantAccessGuard', () => {
     const request = {
       method: 'GET',
       path: '/',
+      headers: {},
+    };
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+  });
+
+  it('allows OPTIONS requests without authentication', async () => {
+    const request = {
+      method: 'OPTIONS',
+      path: '/measures/query',
       headers: {},
     };
 
@@ -121,6 +132,81 @@ describe('TenantAccessGuard', () => {
 
     await expect(guard.canActivate(createContext(request))).rejects.toThrow(
       ForbiddenException,
+    );
+  });
+
+  it('propagates unauthorized when management API returns 401', async () => {
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+      createResponse(401),
+    );
+
+    const request = {
+      method: 'GET',
+      path: '/measures/query',
+      headers: {
+        authorization: 'Bearer valid-token',
+      },
+    };
+
+    await expect(guard.canActivate(createContext(request))).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('propagates forbidden when management API returns 403', async () => {
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+      createResponse(403),
+    );
+
+    const request = {
+      method: 'GET',
+      path: '/measures/query',
+      headers: {
+        authorization: 'Bearer valid-token',
+      },
+    };
+
+    await expect(guard.canActivate(createContext(request))).rejects.toThrow(
+      ForbiddenException,
+    );
+  });
+
+  it('rejects when management API is unavailable', async () => {
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+      createResponse(500),
+    );
+
+    const request = {
+      method: 'GET',
+      path: '/measures/query',
+      headers: {
+        authorization: 'Bearer valid-token',
+      },
+    };
+
+    await expect(guard.canActivate(createContext(request))).rejects.toThrow(
+      ServiceUnavailableException,
+    );
+  });
+
+  it('rejects when tenant access payload is invalid', async () => {
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+      createResponse(200, {
+        tenant_id: 'tenant-1',
+        read_only: false,
+      }),
+    );
+
+    const request = {
+      method: 'GET',
+      path: '/measures/query',
+      headers: {
+        authorization: 'Bearer valid-token',
+      },
+    };
+
+    await expect(guard.canActivate(createContext(request))).rejects.toThrow(
+      ServiceUnavailableException,
     );
   });
 });
