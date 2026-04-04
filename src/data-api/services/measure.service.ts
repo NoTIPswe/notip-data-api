@@ -90,6 +90,7 @@ export class MeasureService {
     this.validateQueryInput(input);
 
     const pInput: PQueryPersistenceInput = {
+      tenantId: input.tenantId,
       gatewayId: input.gatewayId,
       sensorId: input.sensorId,
       sensorType: input.sensorType,
@@ -115,6 +116,7 @@ export class MeasureService {
     this.validateExportInput(input);
 
     const pInput: NpQueryPersistenceInput = {
+      tenantId: input.tenantId,
       gatewayId: input.gatewayId,
       sensorId: input.sensorId,
       sensorType: input.sensorType,

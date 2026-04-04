@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MeasureModule } from './data-api/measure.module';
 import { SensorModule } from './data-api/sensor.module';
 import { validate } from './env.validation';
+import { TenantAccessGuard } from './auth/tenant-access.guard';
 
 const databaseImports =
   process.env.NODE_ENV === 'test'
@@ -22,6 +24,8 @@ const databaseImports =
               password: configService.get<string>('MEASURES_DB_PASSWORD'),
               database: configService.get<string>('MEASURES_DB_NAME'),
               ssl: configService.get<boolean>('DB_SSL'),
+              synchronize:
+                configService.get<string>('NODE_ENV') !== 'production',
               autoLoadEntities: true,
             };
           },
@@ -40,6 +44,12 @@ const databaseImports =
     SensorModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: TenantAccessGuard,
+    },
+  ],
 })
 export class AppModule {}

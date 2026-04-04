@@ -6,6 +6,7 @@ import { MeasureEntity } from './entity/measure.entity';
 import { MeasurePersistenceService } from './services/measure.persistence.service';
 import { StreamListenerService } from './services/stream-listener.service';
 import { TelemetryStreamBridgeService } from './services/telemetry-stream-bridge.service';
+import { CostNatsResponderService } from './services/cost-nats-responder.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([MeasureEntity])],
@@ -15,6 +16,7 @@ import { TelemetryStreamBridgeService } from './services/telemetry-stream-bridge
     MeasurePersistenceService,
     StreamListenerService,
     TelemetryStreamBridgeService,
+    CostNatsResponderService,
   ],
 })
 export class MeasureModule {}

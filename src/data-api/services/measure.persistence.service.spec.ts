@@ -187,4 +187,36 @@ describe('MeasurePersistenceService', () => {
     expect(qb.orderBy).toHaveBeenCalledWith('m.time', 'DESC');
     expect(result).toEqual(rows);
   });
+
+  it('returns tenant data size at rest in bytes', async () => {
+    const repository = {
+      query: jest.fn().mockResolvedValue([{ data_size_at_rest: '2048' }]),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    const result = await service.getTenantDataSizeAtRest(
+      '00000000-0000-0000-0000-000000000001',
+    );
+
+    expect(repository.query).toHaveBeenCalledWith(
+      expect.stringContaining('SUM(pg_column_size(td))'),
+      ['00000000-0000-0000-0000-000000000001'],
+    );
+    expect(result).toBe(2048);
+  });
+
+  it('falls back to zero when tenant data size cannot be parsed', async () => {
+    const repository = {
+      query: jest.fn().mockResolvedValue([{ data_size_at_rest: 'invalid' }]),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    const result = await service.getTenantDataSizeAtRest(
+      '00000000-0000-0000-0000-000000000001',
+    );
+
+    expect(result).toBe(0);
+  });
 });

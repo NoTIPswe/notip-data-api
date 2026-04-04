@@ -30,6 +30,7 @@ describe('validate', () => {
       NATS_TLS_CA: undefined,
       NATS_TLS_CERT: undefined,
       NATS_TLS_KEY: undefined,
+      MGMT_API_URL: 'http://management-api:3000',
     });
   });
 
@@ -89,6 +90,7 @@ describe('validate', () => {
       NATS_TLS_CA: undefined,
       NATS_TLS_CERT: undefined,
       NATS_TLS_KEY: undefined,
+      MGMT_API_URL: 'http://management-api:3000',
     });
   });
 });

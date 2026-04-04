@@ -32,6 +32,7 @@ describe('MeasureService', () => {
 
   describe('query', () => {
     const input: QueryInput = {
+      tenantId: 'tenant-1',
       gatewayId: ['gw-1'],
       sensorId: ['sensor-1'],
       sensorType: ['temperature'],
@@ -85,6 +86,7 @@ describe('MeasureService', () => {
       const result = await service.query(input);
 
       expect(mps.paginatedQuery.mock.calls[0]?.[0]).toEqual({
+        tenantId: input.tenantId,
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
@@ -233,6 +235,7 @@ describe('MeasureService', () => {
 
   describe('export', () => {
     const input: ExportInput = {
+      tenantId: 'tenant-1',
       gatewayId: ['gw-1'],
       sensorId: ['sensor-1'],
       sensorType: ['temperature'],
@@ -277,6 +280,7 @@ describe('MeasureService', () => {
       const result = await service.export(input);
 
       expect(mps.nonPaginatedQuery.mock.calls[0]?.[0]).toEqual({
+        tenantId: input.tenantId,
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
