@@ -74,7 +74,7 @@ export class TenantAccessGuard implements CanActivate {
   ): Promise<TenantAccessContext> {
     const managementApiUrl = this.configService.get<string>(
       'MGMT_API_URL',
-      'https://management-api:3000',
+      'http://management-api:3000',
     );
 
     const response = await fetch(`${managementApiUrl}/auth/tenant-status`, {

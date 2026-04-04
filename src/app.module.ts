@@ -24,6 +24,8 @@ const databaseImports =
               password: configService.get<string>('MEASURES_DB_PASSWORD'),
               database: configService.get<string>('MEASURES_DB_NAME'),
               ssl: configService.get<boolean>('DB_SSL'),
+              synchronize:
+                configService.get<string>('NODE_ENV') !== 'production',
               autoLoadEntities: true,
             };
           },
