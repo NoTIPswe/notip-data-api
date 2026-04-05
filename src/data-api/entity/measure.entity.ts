@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@Entity({ name: 'telemetry_data' })
+@Entity({ name: 'telemetry' })
 export class MeasureEntity {
   @PrimaryColumn({ name: 'time', type: 'timestamptz' })
   time: string;

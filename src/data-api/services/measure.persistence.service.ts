@@ -98,8 +98,8 @@ export class MeasurePersistenceService implements NpQueryPersistenceService {
       await this.r.query(
         `
           SELECT COALESCE(SUM(pg_column_size(td)), 0)::bigint AS data_size_at_rest
-          FROM telemetry_data td
-          WHERE td.tenant_id = $1::uuid
+          FROM telemetry td
+          WHERE td.tenant_id = $1
         `,
         [tenantId],
       );
