@@ -29,7 +29,7 @@ describe('TenantAccessGuard', () => {
       get: jest.fn().mockReturnValue('https://management-api:3000'),
     } as unknown as ConfigService;
     guard = new TenantAccessGuard(configService);
-    global.fetch = jest.fn();
+    globalThis.fetch = jest.fn();
   });
 
   afterEach(() => {
@@ -40,6 +40,16 @@ describe('TenantAccessGuard', () => {
     const request = {
       method: 'GET',
       path: '/',
+      headers: {},
+    };
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+  });
+
+  it('allows metrics endpoint without authentication', async () => {
+    const request = {
+      method: 'GET',
+      path: '/metrics',
       headers: {},
     };
 
@@ -69,7 +79,7 @@ describe('TenantAccessGuard', () => {
   });
 
   it('allows active tenant and stores tenant access context', async () => {
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+    (globalThis.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
       createResponse(200, {
         tenant_id: 'tenant-1',
         status: 'active',
@@ -94,7 +104,7 @@ describe('TenantAccessGuard', () => {
   });
 
   it('allows suspended tenant in read-only mode', async () => {
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+    (globalThis.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
       createResponse(200, {
         tenant_id: 'tenant-1',
         status: 'suspended',
@@ -114,7 +124,7 @@ describe('TenantAccessGuard', () => {
   });
 
   it('rejects suspended tenant on write operations', async () => {
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+    (globalThis.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
       createResponse(200, {
         tenant_id: 'tenant-1',
         status: 'suspended',
@@ -136,7 +146,7 @@ describe('TenantAccessGuard', () => {
   });
 
   it('propagates unauthorized when management API returns 401', async () => {
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+    (globalThis.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
       createResponse(401),
     );
 
@@ -154,7 +164,7 @@ describe('TenantAccessGuard', () => {
   });
 
   it('propagates forbidden when management API returns 403', async () => {
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+    (globalThis.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
       createResponse(403),
     );
 
@@ -172,7 +182,7 @@ describe('TenantAccessGuard', () => {
   });
 
   it('rejects when management API is unavailable', async () => {
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+    (globalThis.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
       createResponse(500),
     );
 
@@ -190,7 +200,7 @@ describe('TenantAccessGuard', () => {
   });
 
   it('rejects when tenant access payload is invalid', async () => {
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+    (globalThis.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
       createResponse(200, {
         tenant_id: 'tenant-1',
         read_only: false,

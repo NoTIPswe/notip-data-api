@@ -57,8 +57,8 @@ export class TenantAccessGuard implements CanActivate {
       return true;
     }
 
-    const path = request.path ?? request.url;
-    return path === '/';
+    const path = (request.path ?? request.url ?? '').split('?')[0];
+    return path === '/' || path === '/metrics';
   }
 
   private extractBearerToken(authorization?: string): string | undefined {
