@@ -8,6 +8,72 @@ import { Observable, map } from 'rxjs';
 import { SensorDto } from './dto/sensor.dto';
 import { SensorModel } from './models/sensor.model';
 
+const IV_BYTES = 12;
+const AUTH_TAG_BYTES = 16;
+const MIN_ENCRYPTED_DATA_BYTES = 8;
+
+function isHexString(value: string): boolean {
+  return value.length % 2 === 0 && /^[0-9a-fA-F]+$/.test(value);
+}
+
+function decodeBase64(value: string): Buffer | undefined {
+  const normalized = value.trim().replaceAll('-', '+').replaceAll('_', '/');
+
+  if (normalized.length === 0 || normalized.length % 4 === 1) {
+    return undefined;
+  }
+
+  const padding = (4 - (normalized.length % 4)) % 4;
+  const padded = normalized + '='.repeat(padding);
+
+  try {
+    const decoded = Buffer.from(padded, 'base64');
+    if (decoded.length === 0) {
+      return undefined;
+    }
+
+    // Guard against false positives (arbitrary strings that happen to decode).
+    const roundTrip = decoded.toString('base64').replace(/=+$/u, '');
+    const source = normalized.replace(/=+$/u, '');
+
+    return roundTrip === source ? decoded : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function toHexIfBase64(
+  value: string,
+  expectedBytes?: number,
+  minBytes = 1,
+): string {
+  if (isHexString(value)) {
+    return value.toLowerCase();
+  }
+
+  const decoded = decodeBase64(value);
+
+  if (!decoded) {
+    return value;
+  }
+
+  if (decoded.length < minBytes) {
+    return value;
+  }
+
+  if (expectedBytes !== undefined && decoded.length !== expectedBytes) {
+    return value;
+  }
+
+  return decoded.toString('hex');
+}
+
+function normalizeTimestamp(value: string): string {
+  const parsed = new Date(value);
+
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
+}
+
 export class MeasureMapper {
   static toEncryptedEnvelopeDto(
     model: EncryptedEnvelopeModel,
@@ -16,10 +82,14 @@ export class MeasureMapper {
       gatewayId: model.gatewayId,
       sensorId: model.sensorId,
       sensorType: model.sensorType,
-      timestamp: model.timestamp,
-      encryptedData: model.encryptedData,
-      iv: model.iv,
-      authTag: model.authTag,
+      timestamp: normalizeTimestamp(model.timestamp),
+      encryptedData: toHexIfBase64(
+        model.encryptedData,
+        undefined,
+        MIN_ENCRYPTED_DATA_BYTES,
+      ),
+      iv: toHexIfBase64(model.iv, IV_BYTES),
+      authTag: toHexIfBase64(model.authTag, AUTH_TAG_BYTES),
       keyVersion: model.keyVersion,
     };
   }
@@ -30,12 +100,6 @@ export class MeasureMapper {
       nextCursor: model.nextCursor,
       hasMore: model.hasMore,
     };
-  }
-
-  static toQueryResponseDtos(
-    models: PaginatedQueryModel[],
-  ): QueryResponseDto[] {
-    return models.map((model) => this.toQueryResponseDto(model));
   }
 
   static toExportResponseDto(

@@ -86,7 +86,7 @@ function throwHttpException(
 export class MeasureService {
   constructor(private readonly mps: MeasurePersistenceService) {}
 
-  async query(input: QueryInput): Promise<PaginatedQueryModel[]> {
+  async query(input: QueryInput): Promise<PaginatedQueryModel> {
     this.validateQueryInput(input);
 
     const pInput: PQueryPersistenceInput = {
@@ -102,7 +102,7 @@ export class MeasureService {
 
     try {
       const result = await this.mps.paginatedQuery(pInput);
-      return [MeasureMapper.toPaginatedQueryModel(result)];
+      return MeasureMapper.toPaginatedQueryModel(result);
     } catch (error: unknown) {
       if (isServiceError(error)) {
         this.handleQueryError(error);

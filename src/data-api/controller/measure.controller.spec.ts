@@ -93,11 +93,11 @@ describe('MeasureController', () => {
         hasMore: true,
       };
 
-      service.query.mockResolvedValue([queryModel]);
+      service.query.mockResolvedValue(queryModel);
 
       const mapperSpy = jest
-        .spyOn(MeasureMapper, 'toQueryResponseDtos')
-        .mockReturnValue([queryResponseDto]);
+        .spyOn(MeasureMapper, 'toQueryResponseDto')
+        .mockReturnValue(queryResponseDto);
 
       const result = await controller.query(
         from,
@@ -122,8 +122,8 @@ describe('MeasureController', () => {
         cursor,
       });
       expect(mapperSpy).toHaveBeenCalledTimes(1);
-      expect(mapperSpy).toHaveBeenCalledWith([queryModel]);
-      expect(result).toEqual([queryResponseDto]);
+      expect(mapperSpy).toHaveBeenCalledWith(queryModel);
+      expect(result).toEqual(queryResponseDto);
     });
 
     it('should use default limit = 999 when limit is not provided', async () => {
@@ -142,11 +142,11 @@ describe('MeasureController', () => {
         hasMore: false,
       };
 
-      service.query.mockResolvedValue([queryModel]);
+      service.query.mockResolvedValue(queryModel);
 
       const mapperSpy = jest
-        .spyOn(MeasureMapper, 'toQueryResponseDtos')
-        .mockReturnValue([queryResponseDto]);
+        .spyOn(MeasureMapper, 'toQueryResponseDto')
+        .mockReturnValue(queryResponseDto);
 
       const result = await controller.query(
         from,
@@ -171,11 +171,14 @@ describe('MeasureController', () => {
         cursor: undefined,
       });
       expect(mapperSpy).toHaveBeenCalledTimes(1);
-      expect(result).toEqual([queryResponseDto]);
+      expect(result).toEqual(queryResponseDto);
     });
 
     it('should normalize single-value filters into arrays', async () => {
-      service.query.mockResolvedValue([]);
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
 
       await controller.query(
         '2024-01-01T00:00:00Z',
@@ -201,7 +204,10 @@ describe('MeasureController', () => {
     });
 
     it('should preserve numeric limit values as-is', async () => {
-      service.query.mockResolvedValue([]);
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
 
       await controller.query(
         '2024-01-01T00:00:00Z',
@@ -227,7 +233,10 @@ describe('MeasureController', () => {
     });
 
     it('should fallback to default limit when limit is not numeric', async () => {
-      service.query.mockResolvedValue([]);
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
 
       await controller.query(
         '2024-01-01T00:00:00Z',

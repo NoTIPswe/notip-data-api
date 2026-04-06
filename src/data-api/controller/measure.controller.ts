@@ -133,7 +133,7 @@ export class MeasureController {
     @Query('sensorType') sensorType?: string | string[],
     @Query('cursor') cursor?: string,
     @TenantId() tenantId?: string,
-  ): Promise<QueryResponseDto[]> {
+  ): Promise<QueryResponseDto> {
     const input: QueryInput = {
       from,
       to,
@@ -146,7 +146,7 @@ export class MeasureController {
     };
 
     const queryModel = await this.ms.query(input);
-    return MeasureMapper.toQueryResponseDtos(queryModel);
+    return MeasureMapper.toQueryResponseDto(queryModel);
   }
 
   @ApiMeasureStreamDocs()
