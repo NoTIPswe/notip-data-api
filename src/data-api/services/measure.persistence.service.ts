@@ -93,15 +93,12 @@ export class MeasurePersistenceService implements NpQueryPersistenceService {
     return qb.getMany();
   }
 
-  async getTenantDataSizeAtRest(tenantId: string): Promise<number> {
+  async getTenantDataSizeAtRest(_tenantId: string): Promise<number> {
     const rows: Array<{ data_size_at_rest?: number | string }> =
       await this.r.query(
         `
-          SELECT COALESCE(SUM(pg_column_size(td)), 0)::bigint AS data_size_at_rest
-          FROM telemetry td
-          WHERE td.tenant_id = $1
+          SELECT pg_database_size(current_database())::bigint AS data_size_at_rest
         `,
-        [tenantId],
       );
 
     const rawSize = rows[0]?.data_size_at_rest;

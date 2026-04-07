@@ -188,7 +188,7 @@ describe('MeasurePersistenceService', () => {
     expect(result).toEqual(rows);
   });
 
-  it('returns tenant data size at rest in bytes', async () => {
+  it('returns measures DB occupied size in bytes', async () => {
     const repository = {
       query: jest.fn().mockResolvedValue([{ data_size_at_rest: '2048' }]),
     };
@@ -200,8 +200,7 @@ describe('MeasurePersistenceService', () => {
     );
 
     expect(repository.query).toHaveBeenCalledWith(
-      expect.stringContaining('SUM(pg_column_size(td))'),
-      ['00000000-0000-0000-0000-000000000001'],
+      expect.stringContaining('pg_database_size(current_database())'),
     );
     expect(result).toBe(2048);
   });
