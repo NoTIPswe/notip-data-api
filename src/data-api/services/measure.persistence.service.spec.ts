@@ -6,6 +6,7 @@ describe('MeasurePersistenceService', () => {
     const qb = {
       andWhere: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
       getMany: jest.fn(),
     };
@@ -13,7 +14,7 @@ describe('MeasurePersistenceService', () => {
     return qb;
   };
 
-  it('builds a paginated query with all filters and returns next cursor', async () => {
+  it('builds a paginated query with all filters and returns a composite next cursor', async () => {
     const qb = createQueryBuilder();
     const rows: MeasureEntity[] = [
       {
@@ -64,7 +65,7 @@ describe('MeasurePersistenceService', () => {
       sensorType: ['temperature'],
       from: '2026-03-23T09:50:00.000Z',
       to: '2026-03-23T10:00:00.000Z',
-      cursor: '2026-03-23T09:59:00.000Z',
+      cursor: '2026-03-23T09:59:00.000Z|sensor-9',
       limit: 2,
     });
 
@@ -96,15 +97,43 @@ describe('MeasurePersistenceService', () => {
     expect(qb.andWhere).toHaveBeenNthCalledWith(5, 'm.time <= :to', {
       to: '2026-03-23T10:00:00.000Z',
     });
-    expect(qb.andWhere).toHaveBeenNthCalledWith(6, 'm.time < :cursor', {
-      cursor: '2026-03-23T09:59:00.000Z',
-    });
+    expect(qb.andWhere).toHaveBeenNthCalledWith(
+      6,
+      '(m.time < :cursorTime OR (m.time = :cursorTime AND m.sensorId < :cursorSensorId))',
+      {
+        cursorTime: '2026-03-23T09:59:00.000Z',
+        cursorSensorId: 'sensor-9',
+      },
+    );
     expect(qb.orderBy).toHaveBeenCalledWith('m.time', 'DESC');
+    expect(qb.addOrderBy).toHaveBeenCalledWith('m.sensorId', 'DESC');
     expect(qb.take).toHaveBeenCalledWith(3);
     expect(result).toEqual({
       data: rows.slice(0, 2),
-      nextCursor: '2026-03-23T09:55:00.000Z',
+      nextCursor: '2026-03-23T09:55:00.000Z|sensor-1',
       hasMore: true,
+    });
+  });
+
+  it('supports legacy timestamp-only cursor values', async () => {
+    const qb = createQueryBuilder();
+    qb.getMany.mockResolvedValue([]);
+
+    const repository = {
+      createQueryBuilder: jest.fn().mockReturnValue(qb),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    await service.paginatedQuery({
+      from: '2026-03-23T09:50:00.000Z',
+      to: '2026-03-23T10:00:00.000Z',
+      cursor: '2026-03-23T09:59:00.000Z',
+      limit: 2,
+    });
+
+    expect(qb.andWhere).toHaveBeenNthCalledWith(3, 'm.time < :cursor', {
+      cursor: '2026-03-23T09:59:00.000Z',
     });
   });
 
