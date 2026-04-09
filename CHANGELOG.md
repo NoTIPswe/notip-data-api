@@ -1,3 +1,24 @@
+# [1.3.0](https://github.com/NoTIPswe/notip-data-api/compare/v1.2.0...v1.3.0) (2026-04-09)
+
+
+### Bug Fixes
+
+* bug regarding costs calculation: now correctly uses TenantId as filter ([a54fac2](https://github.com/NoTIPswe/notip-data-api/commit/a54fac27b756294ab58df80f217a6c914186b93e))
+* bugs ([5b995cf](https://github.com/NoTIPswe/notip-data-api/commit/5b995cf452fbe68440d40baff2ec14b511e064fe))
+* cursor problem string convertion ([6152a55](https://github.com/NoTIPswe/notip-data-api/commit/6152a55ab6469ebf78f79242ae6c93da49e92974))
+* data convertion base64 into HEX for payload decryption ([5480bce](https://github.com/NoTIPswe/notip-data-api/commit/5480bcefe46bee0ad69f52e05b51d119fd6f33ae))
+* implementing composed primary key ([089abe6](https://github.com/NoTIPswe/notip-data-api/commit/089abe6efeb359fe09b7fb59a3a5facd9cebf51f))
+* issues ([1ec3803](https://github.com/NoTIPswe/notip-data-api/commit/1ec380396ca67b3693698d59d65b81019512f966))
+* issues ([a28c551](https://github.com/NoTIPswe/notip-data-api/commit/a28c551f937804f6627d976f6a42bfaf1a37cebb))
+* measures cost storage ([a3cff98](https://github.com/NoTIPswe/notip-data-api/commit/a3cff9898d0d80863f1d5f083f691f8ee7bd3b50))
+* telemetry naming table ([970fc7b](https://github.com/NoTIPswe/notip-data-api/commit/970fc7be5fb0cdc600538b4d3fc982ff01d1675a))
+
+
+### Features
+
+* add metrics module with controller, service, and interceptor for monitoring ([4678529](https://github.com/NoTIPswe/notip-data-api/commit/4678529da1a5946efae46b932e831c72600feb3e))
+* tenant status ([a673e00](https://github.com/NoTIPswe/notip-data-api/commit/a673e000f0d7a6888415f56baffd967b55a62ff9))
+
 # [1.2.0](https://github.com/NoTIPswe/notip-data-api/compare/v1.1.0...v1.2.0) (2026-04-02)
 
 
