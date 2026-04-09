@@ -7,6 +7,8 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import { PaginatedQuery } from './../interfaces/paginated-query';
 import { NpQueryPersistenceService } from '../interfaces/np-query-persistence.service';
 
+const CURSOR_SEPARATOR = '|';
+
 function applyScalarFilter(
   qb: SelectQueryBuilder<MeasureEntity>,
   column: string,
@@ -37,6 +39,25 @@ function applyArrayFilter(
   });
 }
 
+function parseCompositeCursor(
+  cursor: string,
+): { time: string; sensorId: string } | undefined {
+  const separatorIndex = cursor.lastIndexOf(CURSOR_SEPARATOR);
+
+  if (separatorIndex <= 0 || separatorIndex >= cursor.length - 1) {
+    return undefined;
+  }
+
+  return {
+    time: cursor.slice(0, separatorIndex),
+    sensorId: cursor.slice(separatorIndex + 1),
+  };
+}
+
+function toCompositeCursor(time: string, sensorId: string): string {
+  return `${time}${CURSOR_SEPARATOR}${sensorId}`;
+}
+
 @Injectable()
 export class MeasurePersistenceService implements NpQueryPersistenceService {
   constructor(
@@ -56,17 +77,44 @@ export class MeasurePersistenceService implements NpQueryPersistenceService {
     qb.andWhere('m.time <= :to', { to: p.to });
 
     if (p.cursor) {
-      qb.andWhere('m.time < :cursor', { cursor: p.cursor });
+      const cursor = parseCompositeCursor(p.cursor);
+
+      if (cursor) {
+        qb.andWhere(
+          '(m.time < :cursorTime OR (m.time = :cursorTime AND m.sensorId < :cursorSensorId))',
+          {
+            cursorTime: cursor.time,
+            cursorSensorId: cursor.sensorId,
+          },
+        );
+      } else {
+        // Backward compatibility for old timestamp-only cursors.
+        qb.andWhere('m.time < :cursor', { cursor: p.cursor });
+      }
     }
 
     qb.orderBy('m.time', 'DESC');
+    qb.addOrderBy('m.sensorId', 'DESC');
     qb.take(p.limit + 1);
 
     const rows = await qb.getMany();
 
     const hasMore = rows.length > p.limit;
     const data = hasMore ? rows.slice(0, p.limit) : rows;
-    const nextCursor = hasMore ? data.at(-1)?.time : undefined;
+    const lastRow = data.at(-1);
+
+    let timeString: string | undefined;
+    if (hasMore && lastRow) {
+      timeString =
+        typeof lastRow.time === 'object' && lastRow.time !== null
+          ? (lastRow.time as Date).toISOString()
+          : String(lastRow.time);
+    }
+
+    const nextCursor =
+      hasMore && lastRow && timeString
+        ? toCompositeCursor(timeString, lastRow.sensorId)
+        : undefined;
 
     return {
       data,
@@ -91,5 +139,29 @@ export class MeasurePersistenceService implements NpQueryPersistenceService {
     qb.orderBy('m.time', 'DESC');
 
     return qb.getMany();
+  }
+
+  async getTenantDataSizeAtRest(tenantId: string): Promise<number> {
+    const rows: Array<{ data_size_at_rest?: number | string }> =
+      await this.r.query(
+        `
+          SELECT COALESCE(SUM(pg_column_size(t)), 0)::bigint AS data_size_at_rest
+          FROM telemetry t
+          WHERE t.tenant_id = $1
+        `,
+        [tenantId],
+      );
+
+    const rawSize = rows[0]?.data_size_at_rest;
+    if (typeof rawSize === 'number') {
+      return Number.isFinite(rawSize) ? rawSize : 0;
+    }
+
+    if (typeof rawSize === 'string') {
+      const parsed = Number(rawSize);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    return 0;
   }
 }

@@ -18,6 +18,7 @@ import {
   ApiMeasureQueryDocs,
   ApiMeasureStreamDocs,
 } from '../openapi.decorators';
+import { TenantId } from '../../auth/decorators/tenant-id.decorator';
 
 const DEFAULT_QUERY_LIMIT = 999;
 
@@ -64,42 +65,33 @@ function decodeBase64Url(value: string): string | undefined {
   }
 }
 
-function extractJwtContext(authorization?: string): {
-  tenantId?: string;
-  tokenExpiresAt?: number;
-} {
+function extractTokenExpiresAt(authorization?: string): number | undefined {
   const token = parseBearerToken(authorization);
 
   if (!token) {
-    return {};
+    return undefined;
   }
 
   const [, payload] = token.split('.');
 
   if (!payload) {
-    return {};
+    return undefined;
   }
 
   const decoded = decodeBase64Url(payload);
 
   if (!decoded) {
-    return {};
+    return undefined;
   }
 
   try {
     const parsed = JSON.parse(decoded) as {
-      tenantId?: string;
-      tenant_id?: string;
       exp?: number;
     };
 
-    return {
-      tenantId: parsed.tenantId ?? parsed.tenant_id,
-      tokenExpiresAt:
-        typeof parsed.exp === 'number' ? parsed.exp * 1000 : undefined,
-    };
+    return typeof parsed.exp === 'number' ? parsed.exp * 1000 : undefined;
   } catch {
-    return {};
+    return undefined;
   }
 }
 
@@ -140,11 +132,13 @@ export class MeasureController {
     @Query('sensorId') sensorId?: string | string[],
     @Query('sensorType') sensorType?: string | string[],
     @Query('cursor') cursor?: string,
-  ): Promise<QueryResponseDto[]> {
+    @TenantId() tenantId?: string,
+  ): Promise<QueryResponseDto> {
     const input: QueryInput = {
       from,
       to,
       limit: normalizeLimit(limit),
+      tenantId,
       gatewayId: normalizeArrayParam(gatewayId),
       sensorId: normalizeArrayParam(sensorId),
       sensorType: normalizeArrayParam(sensorType),
@@ -152,7 +146,7 @@ export class MeasureController {
     };
 
     const queryModel = await this.ms.query(input);
-    return MeasureMapper.toQueryResponseDtos(queryModel);
+    return MeasureMapper.toQueryResponseDto(queryModel);
   }
 
   @ApiMeasureStreamDocs()
@@ -177,15 +171,15 @@ export class MeasureController {
     @Query('sensorId') sensorId?: string | string[],
     @Query('sensorType') sensorType?: string | string[],
     @Query('since') since?: string,
+    @TenantId() tenantId?: string,
   ): Observable<MessageEvent> {
-    const jwtContext = extractJwtContext(request.headers.authorization);
     const input: StreamInput = {
       gatewayId: normalizeArrayParam(gatewayId),
       sensorId: normalizeArrayParam(sensorId),
       sensorType: normalizeArrayParam(sensorType),
       since,
-      tenantId: jwtContext.tenantId,
-      tokenExpiresAt: jwtContext.tokenExpiresAt,
+      tenantId,
+      tokenExpiresAt: extractTokenExpiresAt(request.headers.authorization),
     };
 
     return this.sl.stream(input).pipe(
@@ -230,10 +224,12 @@ export class MeasureController {
     @Query('gatewayId') gatewayId?: string | string[],
     @Query('sensorId') sensorId?: string | string[],
     @Query('sensorType') sensorType?: string | string[],
+    @TenantId() tenantId?: string,
   ): Promise<EncryptedEnvelopeDto[]> {
     const input: ExportInput = {
       from,
       to,
+      tenantId,
       gatewayId: normalizeArrayParam(gatewayId),
       sensorId: normalizeArrayParam(sensorId),
       sensorType: normalizeArrayParam(sensorType),

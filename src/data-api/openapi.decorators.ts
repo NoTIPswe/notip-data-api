@@ -123,9 +123,10 @@ export function ApiMeasureQueryDocs() {
     ApiQuery({
       name: 'cursor',
       required: false,
-      description: 'Opaque cursor returned by a previous query page',
+      description:
+        'Opaque cursor returned by a previous query page. Current format: <timestamp>|<sensorId>.',
       schema: { type: 'string' },
-      example: '2026-03-23T09:58:00.000Z',
+      example: '2026-03-23T09:58:00.000Z|sensor-1',
     }),
     ApiOkResponse({
       description: 'Paginated measure page',

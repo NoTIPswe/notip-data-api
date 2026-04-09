@@ -9,7 +9,7 @@ export class QueryResponseDto {
   data?: EncryptedEnvelopeDto[];
   @ApiProperty({
     description: 'Cursor to request the next page, if available',
-    example: '2026-03-23T09:58:00.000Z',
+    example: '2026-03-23T09:58:00.000Z|sensor-1',
     required: false,
   })
   nextCursor?: string;

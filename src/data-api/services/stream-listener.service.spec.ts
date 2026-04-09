@@ -1,5 +1,8 @@
-import { firstValueFrom, take } from 'rxjs';
-import { StreamListenerService } from './stream-listener.service';
+import { firstValueFrom, of, take, type Observable } from 'rxjs';
+import {
+  StreamListenerService,
+  type StreamEmission,
+} from './stream-listener.service';
 import { MeasurePersistenceService } from './measure.persistence.service';
 import { MeasureEntity } from '../entity/measure.entity';
 
@@ -111,6 +114,107 @@ describe('StreamListenerService', () => {
         authTag: 'tag-live',
         keyVersion: 3,
       },
+    });
+    expect(persistence.nonPaginatedQuery.mock.calls).toHaveLength(0);
+  });
+
+  it('filters out live measures that do not match gateway/sensor/type filters', async () => {
+    persistence.nonPaginatedQuery.mockResolvedValue([]);
+
+    const eventPromise = firstValueFrom(
+      service
+        .stream({
+          tenantId: 'tenant-1',
+          gatewayId: ['gw-1'],
+          sensorId: ['sensor-1'],
+          sensorType: ['temperature'],
+        })
+        .pipe(take(1)),
+    );
+
+    service.publishLiveMeasure('tenant-1', {
+      gatewayId: 'gw-2',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: '2026-03-23T10:00:01.000Z',
+      encryptedData: 'enc-ignored-1',
+      iv: 'iv-ignored-1',
+      authTag: 'tag-ignored-1',
+      keyVersion: 1,
+    });
+
+    service.publishLiveMeasure('tenant-1', {
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-2',
+      sensorType: 'temperature',
+      timestamp: '2026-03-23T10:00:02.000Z',
+      encryptedData: 'enc-ignored-2',
+      iv: 'iv-ignored-2',
+      authTag: 'tag-ignored-2',
+      keyVersion: 1,
+    });
+
+    service.publishLiveMeasure('tenant-1', {
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'humidity',
+      timestamp: '2026-03-23T10:00:03.000Z',
+      encryptedData: 'enc-ignored-3',
+      iv: 'iv-ignored-3',
+      authTag: 'tag-ignored-3',
+      keyVersion: 1,
+    });
+
+    service.publishLiveMeasure('tenant-1', {
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: '2026-03-23T10:00:04.000Z',
+      encryptedData: 'enc-live',
+      iv: 'iv-live',
+      authTag: 'tag-live',
+      keyVersion: 2,
+    });
+
+    await expect(eventPromise).resolves.toEqual({
+      kind: 'data',
+      data: {
+        gatewayId: 'gw-1',
+        sensorId: 'sensor-1',
+        sensorType: 'temperature',
+        timestamp: '2026-03-23T10:00:04.000Z',
+        encryptedData: 'enc-live',
+        iv: 'iv-live',
+        authTag: 'tag-live',
+        keyVersion: 2,
+      },
+    });
+  });
+
+  it('passes through error emissions from the source stream', async () => {
+    const listenToSourceSpy = jest.spyOn(
+      service as unknown as {
+        listenToSource: (_input: unknown) => Observable<StreamEmission>;
+      },
+      'listenToSource',
+    );
+
+    listenToSourceSpy.mockReturnValue(
+      of<StreamEmission>({
+        kind: 'error',
+        reason: 'token_expired',
+      }),
+    );
+
+    await expect(
+      firstValueFrom(
+        service.stream({
+          tenantId: 'tenant-1',
+        }),
+      ),
+    ).resolves.toEqual({
+      kind: 'error',
+      reason: 'token_expired',
     });
   });
 

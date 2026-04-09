@@ -93,11 +93,11 @@ describe('MeasureController', () => {
         hasMore: true,
       };
 
-      service.query.mockResolvedValue([queryModel]);
+      service.query.mockResolvedValue(queryModel);
 
       const mapperSpy = jest
-        .spyOn(MeasureMapper, 'toQueryResponseDtos')
-        .mockReturnValue([queryResponseDto]);
+        .spyOn(MeasureMapper, 'toQueryResponseDto')
+        .mockReturnValue(queryResponseDto);
 
       const result = await controller.query(
         from,
@@ -107,6 +107,7 @@ describe('MeasureController', () => {
         sensorId,
         sensorType,
         cursor,
+        'tenant-1',
       );
 
       expect(serviceQueryMock).toHaveBeenCalledTimes(1);
@@ -114,14 +115,15 @@ describe('MeasureController', () => {
         from,
         to,
         limit: 500,
+        tenantId: 'tenant-1',
         gatewayId,
         sensorId,
         sensorType,
         cursor,
       });
       expect(mapperSpy).toHaveBeenCalledTimes(1);
-      expect(mapperSpy).toHaveBeenCalledWith([queryModel]);
-      expect(result).toEqual([queryResponseDto]);
+      expect(mapperSpy).toHaveBeenCalledWith(queryModel);
+      expect(result).toEqual(queryResponseDto);
     });
 
     it('should use default limit = 999 when limit is not provided', async () => {
@@ -140,11 +142,11 @@ describe('MeasureController', () => {
         hasMore: false,
       };
 
-      service.query.mockResolvedValue([queryModel]);
+      service.query.mockResolvedValue(queryModel);
 
       const mapperSpy = jest
-        .spyOn(MeasureMapper, 'toQueryResponseDtos')
-        .mockReturnValue([queryResponseDto]);
+        .spyOn(MeasureMapper, 'toQueryResponseDto')
+        .mockReturnValue(queryResponseDto);
 
       const result = await controller.query(
         from,
@@ -154,6 +156,7 @@ describe('MeasureController', () => {
         undefined,
         undefined,
         undefined,
+        'tenant-1',
       );
 
       expect(serviceQueryMock).toHaveBeenCalledTimes(1);
@@ -161,17 +164,21 @@ describe('MeasureController', () => {
         from,
         to,
         limit: 999,
+        tenantId: 'tenant-1',
         gatewayId: undefined,
         sensorId: undefined,
         sensorType: undefined,
         cursor: undefined,
       });
       expect(mapperSpy).toHaveBeenCalledTimes(1);
-      expect(result).toEqual([queryResponseDto]);
+      expect(result).toEqual(queryResponseDto);
     });
 
     it('should normalize single-value filters into arrays', async () => {
-      service.query.mockResolvedValue([]);
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
 
       await controller.query(
         '2024-01-01T00:00:00Z',
@@ -181,15 +188,133 @@ describe('MeasureController', () => {
         's-1' as unknown as string[],
         'temp' as unknown as string[],
         undefined,
+        'tenant-1',
       );
 
       expect(serviceQueryMock).toHaveBeenCalledWith({
         from: '2024-01-01T00:00:00Z',
         to: '2024-01-02T00:00:00Z',
         limit: 10,
+        tenantId: 'tenant-1',
         gatewayId: ['gw-1'],
         sensorId: ['s-1'],
         sensorType: ['temp'],
+        cursor: undefined,
+      });
+    });
+
+    it('should preserve numeric limit values as-is', async () => {
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
+
+      await controller.query(
+        '2024-01-01T00:00:00Z',
+        '2024-01-02T00:00:00Z',
+        321,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'tenant-1',
+      );
+
+      expect(serviceQueryMock).toHaveBeenCalledWith({
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        limit: 321,
+        tenantId: 'tenant-1',
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        cursor: undefined,
+      });
+    });
+
+    it('should fallback to default limit when limit is not numeric', async () => {
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
+
+      await controller.query(
+        '2024-01-01T00:00:00Z',
+        '2024-01-02T00:00:00Z',
+        'not-a-number',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'tenant-1',
+      );
+
+      expect(serviceQueryMock).toHaveBeenCalledWith({
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        limit: 999,
+        tenantId: 'tenant-1',
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        cursor: undefined,
+      });
+    });
+
+    it('should fallback to default limit when limit is empty string', async () => {
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
+
+      await controller.query(
+        '2024-01-01T00:00:00Z',
+        '2024-01-02T00:00:00Z',
+        '',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'tenant-1',
+      );
+
+      expect(serviceQueryMock).toHaveBeenCalledWith({
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        limit: 999,
+        tenantId: 'tenant-1',
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        cursor: undefined,
+      });
+    });
+
+    it('should fallback to default limit when limit is null', async () => {
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
+
+      await controller.query(
+        '2024-01-01T00:00:00Z',
+        '2024-01-02T00:00:00Z',
+        null as unknown as number,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'tenant-1',
+      );
+
+      expect(serviceQueryMock).toHaveBeenCalledWith({
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        limit: 999,
+        tenantId: 'tenant-1',
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
         cursor: undefined,
       });
     });
@@ -241,12 +366,14 @@ describe('MeasureController', () => {
         gatewayId,
         sensorId,
         sensorType,
+        'tenant-1',
       );
 
       expect(serviceExportMock).toHaveBeenCalledTimes(1);
       expect(serviceExportMock).toHaveBeenCalledWith({
         from,
         to,
+        tenantId: 'tenant-1',
         gatewayId,
         sensorId,
         sensorType,
@@ -275,12 +402,14 @@ describe('MeasureController', () => {
         undefined,
         undefined,
         undefined,
+        'tenant-1',
       );
 
       expect(serviceExportMock).toHaveBeenCalledTimes(1);
       expect(serviceExportMock).toHaveBeenCalledWith({
         from,
         to,
+        tenantId: 'tenant-1',
         gatewayId: undefined,
         sensorId: undefined,
         sensorType: undefined,
@@ -298,11 +427,13 @@ describe('MeasureController', () => {
         'gw-1' as unknown as string[],
         's-1' as unknown as string[],
         'temp' as unknown as string[],
+        'tenant-1',
       );
 
       expect(serviceExportMock).toHaveBeenCalledWith({
         from: '2024-01-01T00:00:00Z',
         to: '2024-01-02T00:00:00Z',
+        tenantId: 'tenant-1',
         gatewayId: ['gw-1'],
         sensorId: ['s-1'],
         sensorType: ['temp'],
@@ -348,6 +479,7 @@ describe('MeasureController', () => {
           'sensor-1' as never,
           'temperature' as never,
           '2026-03-23T09:50:00.000Z',
+          'tenant-1',
         ),
       );
 
@@ -388,6 +520,7 @@ describe('MeasureController', () => {
           undefined,
           undefined,
           undefined,
+          'tenant-1',
         ),
       );
 
@@ -396,6 +529,228 @@ describe('MeasureController', () => {
           type: 'error',
           reason: 'token_expired',
         },
+      });
+    });
+
+    it('should ignore JWT exp when bearer token has no payload segment', async () => {
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'data',
+          data: {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T10:00:00.000Z',
+            encryptedData: 'enc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        }),
+      );
+
+      await firstValueFrom(
+        controller.stream(
+          {
+            headers: {
+              authorization: 'Bearer token-without-payload',
+            },
+          } as never,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'tenant-1',
+        ),
+      );
+
+      expect(mockStreamListenerService.stream).toHaveBeenCalledWith({
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        since: undefined,
+        tenantId: 'tenant-1',
+        tokenExpiresAt: undefined,
+      });
+    });
+
+    it('should ignore JWT exp when payload is not valid JSON', async () => {
+      const payload = Buffer.from('not-json').toString('base64url');
+
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'data',
+          data: {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T10:00:00.000Z',
+            encryptedData: 'enc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        }),
+      );
+
+      await firstValueFrom(
+        controller.stream(
+          {
+            headers: {
+              authorization: `Bearer header.${payload}.signature`,
+            },
+          } as never,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'tenant-1',
+        ),
+      );
+
+      expect(mockStreamListenerService.stream).toHaveBeenCalledWith({
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        since: undefined,
+        tenantId: 'tenant-1',
+        tokenExpiresAt: undefined,
+      });
+    });
+
+    it('should ignore JWT exp when base64url decoding fails', async () => {
+      jest.spyOn(Buffer, 'from').mockImplementation((() => {
+        throw new Error('decode failed');
+      }) as unknown as typeof Buffer.from);
+
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'data',
+          data: {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T10:00:00.000Z',
+            encryptedData: 'enc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        }),
+      );
+
+      await firstValueFrom(
+        controller.stream(
+          {
+            headers: {
+              authorization: 'Bearer header.payload.signature',
+            },
+          } as never,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'tenant-1',
+        ),
+      );
+
+      expect(mockStreamListenerService.stream).toHaveBeenCalledWith({
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        since: undefined,
+        tenantId: 'tenant-1',
+        tokenExpiresAt: undefined,
+      });
+    });
+
+    it('should ignore JWT exp when authorization is not a bearer token', async () => {
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'data',
+          data: {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T10:00:00.000Z',
+            encryptedData: 'enc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        }),
+      );
+
+      await firstValueFrom(
+        controller.stream(
+          {
+            headers: {
+              authorization: 'Basic abcdef',
+            },
+          } as never,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'tenant-1',
+        ),
+      );
+
+      expect(mockStreamListenerService.stream).toHaveBeenCalledWith({
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        since: undefined,
+        tenantId: 'tenant-1',
+        tokenExpiresAt: undefined,
+      });
+    });
+
+    it('should ignore JWT exp when payload exp is not numeric', async () => {
+      const payload = Buffer.from(
+        JSON.stringify({
+          exp: 'not-a-number',
+        }),
+      ).toString('base64url');
+
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'data',
+          data: {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T10:00:00.000Z',
+            encryptedData: 'enc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        }),
+      );
+
+      await firstValueFrom(
+        controller.stream(
+          {
+            headers: {
+              authorization: `Bearer header.${payload}.signature`,
+            },
+          } as never,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'tenant-1',
+        ),
+      );
+
+      expect(mockStreamListenerService.stream).toHaveBeenCalledWith({
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        since: undefined,
+        tenantId: 'tenant-1',
+        tokenExpiresAt: undefined,
       });
     });
   });

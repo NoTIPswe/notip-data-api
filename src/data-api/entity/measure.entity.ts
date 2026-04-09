@@ -1,15 +1,19 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@Entity({ name: 'telemetry_data' })
+@Entity({ name: 'telemetry' })
 export class MeasureEntity {
   @PrimaryColumn({ name: 'time', type: 'timestamptz' })
   time: string;
+
   @Column({ name: 'tenant_id', type: 'uuid' })
   tenantId: string;
+
   @Column({ name: 'gateway_id', type: 'uuid' })
   gatewayId: string;
-  @Column({ name: 'sensor_id', type: 'uuid' })
+
+  @PrimaryColumn({ name: 'sensor_id', type: 'uuid' })
   sensorId: string;
+
   @Column({ name: 'sensor_type', type: 'varchar', length: 255 })
   sensorType: string;
   @Column({ name: 'encrypted_data', type: 'varchar', length: 255 })

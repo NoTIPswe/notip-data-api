@@ -45,24 +45,6 @@ describe('MeasureMapper', () => {
     });
   });
 
-  it('maps paginated query models to dto array', () => {
-    expect(
-      MeasureMapper.toQueryResponseDtos([
-        {
-          data: [model],
-          nextCursor: 'cursor-1',
-          hasMore: true,
-        },
-      ]),
-    ).toEqual([
-      {
-        data: [model],
-        nextCursor: 'cursor-1',
-        hasMore: true,
-      },
-    ]);
-  });
-
   it('maps a paginated query model with no data to dto', () => {
     expect(
       MeasureMapper.toQueryResponseDto({
@@ -78,6 +60,97 @@ describe('MeasureMapper', () => {
 
   it('maps export models to dto array', () => {
     expect(MeasureMapper.toExportResponseDto([model])).toEqual([model]);
+  });
+
+  it('normalizes base64 envelope fields to hex and timestamp to ISO Z', () => {
+    const normalized = MeasureMapper.toEncryptedEnvelopeDto({
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: '2026-04-06T16:41:58.10169+00:00',
+      encryptedData: 'sJfpJlOKzE8TjcIngGnBw2DjBYL5H6e7qNdzk2ftcVWhONhdqqiVLA==',
+      iv: 'KwLL8TQSYAAr98Ww',
+      authTag: 'O9dM93uOH4GifyJNayKghA==',
+      keyVersion: 1,
+    });
+
+    expect(normalized).toEqual({
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: '2026-04-06T16:41:58.101Z',
+      encryptedData:
+        'b097e926538acc4f138dc2278069c1c360e30582f91fa7bba8d7739367ed7155a138d85daaa8952c',
+      iv: '2b02cbf1341260002bf7c5b0',
+      authTag: '3bd74cf77b8e1f81a27f224d6b22a084',
+      keyVersion: 1,
+    });
+  });
+
+  it('keeps values unchanged when base64 input has invalid encoded length', () => {
+    const normalized = MeasureMapper.toEncryptedEnvelopeDto({
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: '2026-04-06T16:41:58.10169+00:00',
+      encryptedData: 'AQIDBA==',
+      iv: 'abcde',
+      authTag: 'AAAAAAAAAAAAAAAAAAAAAA==',
+      keyVersion: 1,
+    });
+
+    expect(normalized.encryptedData).toBe('AQIDBA==');
+    expect(normalized.iv).toBe('abcde');
+    expect(normalized.authTag).toBe('00000000000000000000000000000000');
+  });
+
+  it('keeps values unchanged when base64 decodes to an empty payload', () => {
+    const normalized = MeasureMapper.toEncryptedEnvelopeDto({
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: '2026-04-06T16:41:58.10169+00:00',
+      encryptedData: 'AQIDBA==',
+      iv: '====',
+      authTag: '====',
+      keyVersion: 1,
+    });
+
+    expect(normalized.encryptedData).toBe('AQIDBA==');
+    expect(normalized.iv).toBe('====');
+    expect(normalized.authTag).toBe('====');
+  });
+
+  it('normalizes uppercase hex fields to lowercase hex', () => {
+    const normalized = MeasureMapper.toEncryptedEnvelopeDto({
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: '2026-04-06T16:41:58.10169+00:00',
+      encryptedData: 'AABBCCDDEEFF00112233445566778899',
+      iv: 'AABBCCDDEEFF001122334455',
+      authTag: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+      keyVersion: 1,
+    });
+
+    expect(normalized.encryptedData).toBe('aabbccddeeff00112233445566778899');
+    expect(normalized.iv).toBe('aabbccddeeff001122334455');
+    expect(normalized.authTag).toBe('ffffffffffffffffffffffffffffffff');
+  });
+
+  it('keeps timestamp unchanged when it is not a valid ISO date', () => {
+    const normalized = MeasureMapper.toEncryptedEnvelopeDto({
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: 'not-a-date',
+      encryptedData: 'enc',
+      iv: 'iv',
+      authTag: 'tag',
+      keyVersion: 1,
+    });
+
+    expect(normalized.timestamp).toBe('not-a-date');
   });
 
   it('maps stream item and stream response', async () => {

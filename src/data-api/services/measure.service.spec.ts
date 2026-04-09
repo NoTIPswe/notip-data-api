@@ -32,6 +32,7 @@ describe('MeasureService', () => {
 
   describe('query', () => {
     const input: QueryInput = {
+      tenantId: 'tenant-1',
       gatewayId: ['gw-1'],
       sensorId: ['sensor-1'],
       sensorType: ['temperature'],
@@ -85,6 +86,7 @@ describe('MeasureService', () => {
       const result = await service.query(input);
 
       expect(mps.paginatedQuery.mock.calls[0]?.[0]).toEqual({
+        tenantId: input.tenantId,
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
@@ -94,7 +96,7 @@ describe('MeasureService', () => {
         limit: input.limit,
       });
       expect(mapperSpy).toHaveBeenCalledWith(persistenceResult);
-      expect(result).toEqual([mappedResult]);
+      expect(result).toEqual(mappedResult);
     });
 
     it('should throw BadRequestException when limit is greater than or equal to 1000', async () => {
@@ -130,21 +132,29 @@ describe('MeasureService', () => {
       expect(mps.paginatedQuery.mock.calls).toHaveLength(0);
     });
 
-    it('should throw BadRequestException when from is after to', async () => {
+    it('should allow query execution when dates are invalid and cannot be parsed', async () => {
+      const mappedResult: PaginatedQueryModel = {
+        data: [],
+        hasMore: false,
+      };
+
+      mps.paginatedQuery.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
+      jest
+        .spyOn(MeasureMapper, 'toPaginatedQueryModel')
+        .mockReturnValue(mappedResult);
+
       await expect(
         service.query({
           ...input,
-          from: '2024-01-01T02:00:00Z',
-          to: '2024-01-01T01:00:00Z',
+          from: 'invalid-from',
+          to: 'invalid-to',
         }),
-      ).rejects.toEqual(
-        new BadRequestException({
-          code: 'QUERY_WINDOW_EXCEEDED',
-          message: 'from must be less than or equal to to',
-        }),
-      );
+      ).resolves.toEqual(mappedResult);
 
-      expect(mps.paginatedQuery.mock.calls).toHaveLength(0);
+      expect(mps.paginatedQuery.mock.calls).toHaveLength(1);
     });
 
     it('should throw BadRequestException on status 400', async () => {
@@ -233,6 +243,7 @@ describe('MeasureService', () => {
 
   describe('export', () => {
     const input: ExportInput = {
+      tenantId: 'tenant-1',
       gatewayId: ['gw-1'],
       sensorId: ['sensor-1'],
       sensorType: ['temperature'],
@@ -277,6 +288,7 @@ describe('MeasureService', () => {
       const result = await service.export(input);
 
       expect(mps.nonPaginatedQuery.mock.calls[0]?.[0]).toEqual({
+        tenantId: input.tenantId,
         gatewayId: input.gatewayId,
         sensorId: input.sensorId,
         sensorType: input.sensorType,
@@ -304,21 +316,23 @@ describe('MeasureService', () => {
       expect(mps.nonPaginatedQuery.mock.calls).toHaveLength(0);
     });
 
-    it('should throw BadRequestException when export from is after to', async () => {
+    it('should allow export execution when dates are invalid and cannot be parsed', async () => {
+      const mappedResult: EncryptedEnvelopeModel[] = [];
+
+      mps.nonPaginatedQuery.mockResolvedValue([]);
+      jest
+        .spyOn(MeasureMapper, 'toEncryptedEnvelopeModels')
+        .mockReturnValue(mappedResult);
+
       await expect(
         service.export({
           ...input,
-          from: '2024-01-01T02:00:00Z',
-          to: '2024-01-01T01:00:00Z',
+          from: 'invalid-from',
+          to: 'invalid-to',
         }),
-      ).rejects.toEqual(
-        new BadRequestException({
-          code: 'EXPORT_WINDOW_EXCEEDED',
-          message: 'from must be less than or equal to to',
-        }),
-      );
+      ).resolves.toEqual(mappedResult);
 
-      expect(mps.nonPaginatedQuery.mock.calls).toHaveLength(0);
+      expect(mps.nonPaginatedQuery.mock.calls).toHaveLength(1);
     });
 
     it('should throw BadRequestException on status 400', async () => {

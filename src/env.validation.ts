@@ -14,6 +14,7 @@ type DataApiEnv = {
   NATS_TLS_CA?: string;
   NATS_TLS_CERT?: string;
   NATS_TLS_KEY?: string;
+  MGMT_API_URL: string;
 };
 
 function parseNumber(value: string | undefined, name: string): number {
@@ -71,5 +72,6 @@ export function validate(config: NodeJS.ProcessEnv): DataApiEnv {
     NATS_TLS_CA: config.NATS_TLS_CA,
     NATS_TLS_CERT: config.NATS_TLS_CERT,
     NATS_TLS_KEY: config.NATS_TLS_KEY,
+    MGMT_API_URL: config.MGMT_API_URL ?? 'https://management-api:3000',
   };
 }

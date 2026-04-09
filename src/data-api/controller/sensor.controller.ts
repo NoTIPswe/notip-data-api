@@ -5,6 +5,7 @@ import { SensorDto } from '../dto/sensor.dto';
 import { MeasureMapper } from '../measure.mapper';
 import { GetSensorsInput } from '../interfaces/get-sensors.input';
 import { ApiSensorListDocs } from '../openapi.decorators';
+import { TenantId } from '../../auth/decorators/tenant-id.decorator';
 
 @ApiTags('sensors')
 @Controller('sensor')
@@ -33,8 +34,10 @@ export class SensorController {
   })
   async getSensors(
     @Query('gatewayId') gatewayId?: string,
+    @TenantId() tenantId?: string,
   ): Promise<SensorDto[]> {
     const input: GetSensorsInput = {
+      tenantId,
       gatewayId,
     };
     const sensorModel = await this.ss.getSensors(input);
