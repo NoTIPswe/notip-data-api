@@ -217,19 +217,19 @@ describe('MeasurePersistenceService', () => {
     expect(result).toEqual(rows);
   });
 
-  it('returns measures DB occupied size in bytes', async () => {
+  it('returns tenant measures occupied size in bytes', async () => {
+    const tenantId = '00000000-0000-0000-0000-000000000001';
     const repository = {
       query: jest.fn().mockResolvedValue([{ data_size_at_rest: '2048' }]),
     };
 
     const service = new MeasurePersistenceService(repository as never);
 
-    const result = await service.getTenantDataSizeAtRest(
-      '00000000-0000-0000-0000-000000000001',
-    );
+    const result = await service.getTenantDataSizeAtRest(tenantId);
 
     expect(repository.query).toHaveBeenCalledWith(
-      expect.stringContaining('pg_database_size(current_database())'),
+      expect.stringContaining('SUM(pg_column_size(t))'),
+      [tenantId],
     );
     expect(result).toBe(2048);
   });

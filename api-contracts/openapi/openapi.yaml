@@ -33,7 +33,9 @@ paths:
         - name: cursor
           required: false
           in: query
-          description: Opaque cursor returned by a previous query page
+          description: >-
+            Opaque cursor returned by a previous query page. Current format:
+            <timestamp>|<sensorId>.
           schema:
             type: string
         - name: limit
@@ -386,7 +388,7 @@ components:
         nextCursor:
           type: string
           description: Cursor to request the next page, if available
-          example: '2026-03-23T09:58:00.000Z'
+          example: 2026-03-23T09:58:00.000Z|sensor-1
         hasMore:
           type: boolean
           description: Whether more pages are available
