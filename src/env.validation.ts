@@ -72,6 +72,6 @@ export function validate(config: NodeJS.ProcessEnv): DataApiEnv {
     NATS_TLS_CA: config.NATS_TLS_CA,
     NATS_TLS_CERT: config.NATS_TLS_CERT,
     NATS_TLS_KEY: config.NATS_TLS_KEY,
-    MGMT_API_URL: config.MGMT_API_URL ?? 'http://management-api:3000',
+    MGMT_API_URL: config.MGMT_API_URL ?? 'https://management-api:3000',
   };
 }

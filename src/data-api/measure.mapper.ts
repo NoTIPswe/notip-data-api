@@ -16,6 +16,16 @@ function isHexString(value: string): boolean {
   return value.length % 2 === 0 && /^[0-9a-fA-F]+$/.test(value);
 }
 
+function stripBase64Padding(value: string): string {
+  let end = value.length;
+
+  while (end > 0 && value.codePointAt(end - 1) === 61) {
+    end -= 1;
+  }
+
+  return end === value.length ? value : value.slice(0, end);
+}
+
 function decodeBase64(value: string): Buffer | undefined {
   const normalized = value.trim().replaceAll('-', '+').replaceAll('_', '/');
 
@@ -33,8 +43,8 @@ function decodeBase64(value: string): Buffer | undefined {
     }
 
     // Guard against false positives (arbitrary strings that happen to decode).
-    const roundTrip = decoded.toString('base64').replace(/=+$/u, '');
-    const source = normalized.replace(/=+$/u, '');
+    const roundTrip = stripBase64Padding(decoded.toString('base64'));
+    const source = stripBase64Padding(normalized);
 
     return roundTrip === source ? decoded : undefined;
   } catch {

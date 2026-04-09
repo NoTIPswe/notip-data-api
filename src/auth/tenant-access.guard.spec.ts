@@ -56,6 +56,15 @@ describe('TenantAccessGuard', () => {
     await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
   });
 
+  it('allows metrics endpoint when request url includes query string', async () => {
+    const request = {
+      url: '/metrics?format=prometheus',
+      headers: {},
+    };
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+  });
+
   it('allows OPTIONS requests without authentication', async () => {
     const request = {
       method: 'OPTIONS',
@@ -71,6 +80,20 @@ describe('TenantAccessGuard', () => {
       method: 'GET',
       path: '/measures/query',
       headers: {},
+    };
+
+    await expect(guard.canActivate(createContext(request))).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('rejects empty bearer token values on protected endpoints', async () => {
+    const request = {
+      method: 'GET',
+      path: '/measures/query',
+      headers: {
+        authorization: 'Bearer   ',
+      },
     };
 
     await expect(guard.canActivate(createContext(request))).rejects.toThrow(
@@ -114,6 +137,25 @@ describe('TenantAccessGuard', () => {
 
     const request = {
       method: 'GET',
+      path: '/measures/export',
+      headers: {
+        authorization: 'Bearer valid-token',
+      },
+    };
+
+    await expect(guard.canActivate(createContext(request))).resolves.toBe(true);
+  });
+
+  it('defaults to GET when request method is missing in read-only mode', async () => {
+    (globalThis.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue(
+      createResponse(200, {
+        tenant_id: 'tenant-1',
+        status: 'suspended',
+        read_only: true,
+      }),
+    );
+
+    const request = {
       path: '/measures/export',
       headers: {
         authorization: 'Bearer valid-token',

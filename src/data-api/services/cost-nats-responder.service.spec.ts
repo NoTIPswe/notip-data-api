@@ -8,6 +8,10 @@ type TestableCostResponderService = {
   buildConnectionOptions: () => ConnectionOptions;
   consumeMessages: (subscription: Subscription) => Promise<void>;
   extractTenantId: (data: Uint8Array) => string | undefined;
+  respondWithCost: (
+    message: { respond: (payload: Buffer) => void },
+    dataSizeAtRest: number,
+  ) => void;
 };
 
 function asTestableService(
@@ -125,6 +129,35 @@ describe('CostNatsResponderService', () => {
     expect(connect).not.toHaveBeenCalled();
   });
 
+  it('logs initialization errors when NATS connection fails', async () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'development',
+      NATS_URL: 'nats://localhost:4222',
+    };
+
+    const connectError = new Error('nats unavailable');
+    jest.doMock('nats', () => ({
+      connect: jest.fn().mockRejectedValue(connectError),
+    }));
+
+    const ServiceClass = loadServiceClass();
+    const service = new ServiceClass({
+      getTenantDataSizeAtRest: jest.fn(),
+    } as unknown as MeasurePersistenceService);
+    const testableService = asTestableService(service);
+    const errorSpy = jest
+      .spyOn(testableService.logger, 'error')
+      .mockImplementation();
+
+    await service.onModuleInit();
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Failed to initialize cost responder NATS bridge',
+      connectError,
+    );
+  });
+
   it('returns zero when payload is invalid', async () => {
     jest.doMock('nats', () => ({
       connect: jest.fn(),
@@ -207,6 +240,33 @@ describe('CostNatsResponderService', () => {
     expect(response).toEqual({ dataSizeAtRest: 0 });
   });
 
+  it('logs errors when replying to a message fails', () => {
+    jest.doMock('nats', () => ({
+      connect: jest.fn(),
+    }));
+
+    const ServiceClass = loadServiceClass();
+    const service = new ServiceClass({
+      getTenantDataSizeAtRest: jest.fn(),
+    } as unknown as MeasurePersistenceService);
+    const testableService = asTestableService(service);
+    const errorSpy = jest
+      .spyOn(testableService.logger, 'error')
+      .mockImplementation();
+
+    const respond = jest.fn(() => {
+      throw new Error('response channel closed');
+    });
+
+    testableService.respondWithCost({ respond }, 512);
+
+    expect(respond).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Failed to respond to internal.cost request',
+      expect.any(Error),
+    );
+  });
+
   it('builds connection options with token and TLS', () => {
     process.env = {
       ...originalEnv,
@@ -253,5 +313,99 @@ describe('CostNatsResponderService', () => {
       },
     });
     expect(readFileSync).toHaveBeenCalledTimes(3);
+  });
+
+  it('logs TLS loading errors and keeps options without tls payload', () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'development',
+      NATS_URL: 'nats://localhost:4222',
+      NATS_TLS_CA: '/tmp/ca.pem',
+      NATS_TLS_CERT: '/tmp/cert.pem',
+      NATS_TLS_KEY: '/tmp/key.pem',
+    };
+
+    const readFileSync = jest.fn(() => {
+      throw new Error('unable to read certificate');
+    });
+
+    jest.doMock('node:fs', () => {
+      const actualFs = jest.requireActual<typeof import('node:fs')>('node:fs');
+      return {
+        ...actualFs,
+        readFileSync,
+      };
+    });
+    jest.doMock('nats', () => ({
+      connect: jest.fn(),
+    }));
+
+    const ServiceClass = loadServiceClass();
+    const service = new ServiceClass({
+      getTenantDataSizeAtRest: jest.fn(),
+    } as unknown as MeasurePersistenceService);
+    const testableService = asTestableService(service);
+    const errorSpy = jest
+      .spyOn(testableService.logger, 'error')
+      .mockImplementation();
+
+    const options = testableService.buildConnectionOptions();
+
+    expect(readFileSync).toHaveBeenCalled();
+    expect((options as { tls?: unknown }).tls).toBeUndefined();
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Failed to load NATS TLS certificates: unable to read certificate',
+    );
+  });
+
+  it('builds connection options with basic auth when token is not set', () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'development',
+      NATS_SERVERS: ' nats://one:4222, , nats://two:4222 ',
+      NATS_USER: ' user ',
+      NATS_PASSWORD: ' pass ',
+    };
+
+    jest.doMock('nats', () => ({
+      connect: jest.fn(),
+    }));
+
+    const ServiceClass = loadServiceClass();
+    const service = new ServiceClass({
+      getTenantDataSizeAtRest: jest.fn(),
+    } as unknown as MeasurePersistenceService);
+    const testableService = asTestableService(service);
+
+    expect(testableService.buildConnectionOptions()).toEqual({
+      servers: ['nats://one:4222', 'nats://two:4222'],
+      name: 'data-api',
+      user: 'user',
+      pass: 'pass',
+    });
+  });
+
+  it('uses localhost NATS server by default when no server variables are provided', () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'development',
+      NATS_URL: undefined,
+      NATS_SERVERS: undefined,
+    };
+
+    jest.doMock('nats', () => ({
+      connect: jest.fn(),
+    }));
+
+    const ServiceClass = loadServiceClass();
+    const service = new ServiceClass({
+      getTenantDataSizeAtRest: jest.fn(),
+    } as unknown as MeasurePersistenceService);
+    const testableService = asTestableService(service);
+
+    expect(testableService.buildConnectionOptions()).toEqual({
+      servers: ['nats://localhost:4222'],
+      name: 'data-api',
+    });
   });
 });

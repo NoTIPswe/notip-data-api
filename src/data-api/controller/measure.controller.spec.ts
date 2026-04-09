@@ -260,6 +260,64 @@ describe('MeasureController', () => {
         cursor: undefined,
       });
     });
+
+    it('should fallback to default limit when limit is empty string', async () => {
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
+
+      await controller.query(
+        '2024-01-01T00:00:00Z',
+        '2024-01-02T00:00:00Z',
+        '',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'tenant-1',
+      );
+
+      expect(serviceQueryMock).toHaveBeenCalledWith({
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        limit: 999,
+        tenantId: 'tenant-1',
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        cursor: undefined,
+      });
+    });
+
+    it('should fallback to default limit when limit is null', async () => {
+      service.query.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
+
+      await controller.query(
+        '2024-01-01T00:00:00Z',
+        '2024-01-02T00:00:00Z',
+        null as unknown as number,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'tenant-1',
+      );
+
+      expect(serviceQueryMock).toHaveBeenCalledWith({
+        from: '2024-01-01T00:00:00Z',
+        to: '2024-01-02T00:00:00Z',
+        limit: 999,
+        tenantId: 'tenant-1',
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        cursor: undefined,
+      });
+    });
   });
 
   describe('export', () => {
@@ -586,6 +644,96 @@ describe('MeasureController', () => {
           {
             headers: {
               authorization: 'Bearer header.payload.signature',
+            },
+          } as never,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'tenant-1',
+        ),
+      );
+
+      expect(mockStreamListenerService.stream).toHaveBeenCalledWith({
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        since: undefined,
+        tenantId: 'tenant-1',
+        tokenExpiresAt: undefined,
+      });
+    });
+
+    it('should ignore JWT exp when authorization is not a bearer token', async () => {
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'data',
+          data: {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T10:00:00.000Z',
+            encryptedData: 'enc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        }),
+      );
+
+      await firstValueFrom(
+        controller.stream(
+          {
+            headers: {
+              authorization: 'Basic abcdef',
+            },
+          } as never,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'tenant-1',
+        ),
+      );
+
+      expect(mockStreamListenerService.stream).toHaveBeenCalledWith({
+        gatewayId: undefined,
+        sensorId: undefined,
+        sensorType: undefined,
+        since: undefined,
+        tenantId: 'tenant-1',
+        tokenExpiresAt: undefined,
+      });
+    });
+
+    it('should ignore JWT exp when payload exp is not numeric', async () => {
+      const payload = Buffer.from(
+        JSON.stringify({
+          exp: 'not-a-number',
+        }),
+      ).toString('base64url');
+
+      mockStreamListenerService.stream.mockReturnValue(
+        of({
+          kind: 'data',
+          data: {
+            gatewayId: 'gw-1',
+            sensorId: 'sensor-1',
+            sensorType: 'temperature',
+            timestamp: '2026-03-23T10:00:00.000Z',
+            encryptedData: 'enc',
+            iv: 'iv',
+            authTag: 'tag',
+            keyVersion: 1,
+          },
+        }),
+      );
+
+      await firstValueFrom(
+        controller.stream(
+          {
+            headers: {
+              authorization: `Bearer header.${payload}.signature`,
             },
           } as never,
           undefined,

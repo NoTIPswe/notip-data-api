@@ -217,6 +217,27 @@ describe('MeasurePersistenceService', () => {
     expect(result).toEqual(rows);
   });
 
+  it('applies tenant filter for non paginated queries when tenantId is provided', async () => {
+    const qb = createQueryBuilder();
+    qb.getMany.mockResolvedValue([]);
+
+    const repository = {
+      createQueryBuilder: jest.fn().mockReturnValue(qb),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    await service.nonPaginatedQuery({
+      tenantId: 'tenant-1',
+      from: '2026-03-23T09:50:00.000Z',
+      to: '2026-03-23T10:00:00.000Z',
+    });
+
+    expect(qb.andWhere).toHaveBeenNthCalledWith(1, 'm.tenantId = :tenantId', {
+      tenantId: 'tenant-1',
+    });
+  });
+
   it('returns tenant measures occupied size in bytes', async () => {
     const tenantId = '00000000-0000-0000-0000-000000000001';
     const repository = {
@@ -234,6 +255,32 @@ describe('MeasurePersistenceService', () => {
     expect(result).toBe(2048);
   });
 
+  it('returns tenant measures occupied size when driver returns a finite number', async () => {
+    const repository = {
+      query: jest.fn().mockResolvedValue([{ data_size_at_rest: 1024 }]),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    await expect(
+      service.getTenantDataSizeAtRest('00000000-0000-0000-0000-000000000001'),
+    ).resolves.toBe(1024);
+  });
+
+  it('falls back to zero when tenant data size is a non-finite number', async () => {
+    const repository = {
+      query: jest
+        .fn()
+        .mockResolvedValue([{ data_size_at_rest: Number.POSITIVE_INFINITY }]),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    await expect(
+      service.getTenantDataSizeAtRest('00000000-0000-0000-0000-000000000001'),
+    ).resolves.toBe(0);
+  });
+
   it('falls back to zero when tenant data size cannot be parsed', async () => {
     const repository = {
       query: jest.fn().mockResolvedValue([{ data_size_at_rest: 'invalid' }]),
@@ -246,5 +293,17 @@ describe('MeasurePersistenceService', () => {
     );
 
     expect(result).toBe(0);
+  });
+
+  it('falls back to zero when tenant data size query returns no rows', async () => {
+    const repository = {
+      query: jest.fn().mockResolvedValue([]),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    await expect(
+      service.getTenantDataSizeAtRest('00000000-0000-0000-0000-000000000001'),
+    ).resolves.toBe(0);
   });
 });

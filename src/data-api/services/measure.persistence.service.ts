@@ -102,14 +102,18 @@ export class MeasurePersistenceService implements NpQueryPersistenceService {
     const hasMore = rows.length > p.limit;
     const data = hasMore ? rows.slice(0, p.limit) : rows;
     const lastRow = data.at(-1);
+
+    let timeString: string | undefined;
+    if (hasMore && lastRow) {
+      timeString =
+        typeof lastRow.time === 'object' && lastRow.time !== null
+          ? (lastRow.time as Date).toISOString()
+          : String(lastRow.time);
+    }
+
     const nextCursor =
-      hasMore && lastRow
-        ? toCompositeCursor(
-            typeof lastRow.time === 'object' && lastRow.time !== null
-              ? (lastRow.time as Date).toISOString()
-              : String(lastRow.time),
-            lastRow.sensorId,
-          )
+      hasMore && lastRow && timeString
+        ? toCompositeCursor(timeString, lastRow.sensorId)
         : undefined;
 
     return {
