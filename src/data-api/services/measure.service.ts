@@ -199,6 +199,13 @@ export class MeasureService {
       return;
     }
 
+    if (fromTime > toTime) {
+      throw new BadRequestException({
+        code,
+        message: 'from must be less than or equal to to',
+      });
+    }
+
     if (toTime - fromTime > MAX_WINDOW_MS) {
       throw new BadRequestException({
         code,
