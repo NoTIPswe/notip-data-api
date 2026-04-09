@@ -197,6 +197,28 @@ describe('CostNatsResponderService', () => {
     ).toBeUndefined();
   });
 
+  it('returns undefined when tenant_id is blank after trimming', () => {
+    jest.doMock('nats', () => ({
+      connect: jest.fn(),
+    }));
+
+    const ServiceClass = loadServiceClass();
+    const service = new ServiceClass({
+      getTenantDataSizeAtRest: jest.fn(),
+    } as unknown as MeasurePersistenceService);
+    const testableService = asTestableService(service);
+
+    expect(
+      testableService.extractTenantId(
+        Buffer.from(
+          JSON.stringify({
+            tenant_id: '   ',
+          }),
+        ),
+      ),
+    ).toBeUndefined();
+  });
+
   it('returns zero when cost processing fails', async () => {
     jest.doMock('nats', () => ({
       connect: jest.fn(),

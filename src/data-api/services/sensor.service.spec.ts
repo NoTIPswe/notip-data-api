@@ -61,6 +61,26 @@ describe('SensorService', () => {
       expect(toMs - fromMs).toBe(10 * 60 * 1000);
     });
 
+    it('should call nonPaginatedQuery without gateway filter when gatewayId is not provided', async () => {
+      npqps.nonPaginatedQuery.mockResolvedValue([]);
+
+      await service.getSensors({
+        tenantId: 'tenant-1',
+      });
+
+      const [calledWith] = npqps.nonPaginatedQuery.mock.calls[0] as [
+        {
+          tenantId?: string;
+          gatewayId?: string[];
+          from: string;
+          to: string;
+        },
+      ];
+
+      expect(calledWith.tenantId).toBe('tenant-1');
+      expect(calledWith.gatewayId).toBeUndefined();
+    });
+
     it('should return unique sensors from measures', async () => {
       const measures: MeasureEntity[] = [
         {
@@ -217,6 +237,17 @@ describe('SensorService', () => {
       );
     });
 
+    it('should use response.status and error.message for unauthorized errors', async () => {
+      npqps.nonPaginatedQuery.mockRejectedValue({
+        response: {
+          status: 401,
+        },
+        message: 'Token expired',
+      });
+
+      await expect(service.getSensors(input)).rejects.toThrow('Token expired');
+    });
+
     it('should throw ForbiddenException on status 403', async () => {
       npqps.nonPaginatedQuery.mockRejectedValue({
         status: 403,
@@ -230,6 +261,14 @@ describe('SensorService', () => {
       );
     });
 
+    it('should fallback to default forbidden message when service error has no details', async () => {
+      npqps.nonPaginatedQuery.mockRejectedValue({
+        status: 403,
+      });
+
+      await expect(service.getSensors(input)).rejects.toThrow('Forbidden');
+    });
+
     it('should throw NotFoundException on status 404', async () => {
       npqps.nonPaginatedQuery.mockRejectedValue({
         status: 404,
@@ -241,6 +280,14 @@ describe('SensorService', () => {
       await expect(service.getSensors(input)).rejects.toBeInstanceOf(
         NotFoundException,
       );
+    });
+
+    it('should fallback to default not found message when service error has no details', async () => {
+      npqps.nonPaginatedQuery.mockRejectedValue({
+        status: 404,
+      });
+
+      await expect(service.getSensors(input)).rejects.toThrow('Not found');
     });
 
     it('should rethrow unknown errors', async () => {

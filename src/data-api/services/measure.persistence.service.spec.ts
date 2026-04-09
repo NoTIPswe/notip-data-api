@@ -115,6 +115,68 @@ describe('MeasurePersistenceService', () => {
     });
   });
 
+  it('supports tenant filter and Date instances when building next cursor', async () => {
+    const qb = createQueryBuilder();
+    const rows: MeasureEntity[] = [
+      {
+        time: new Date('2026-03-23T09:58:00.000Z') as unknown as string,
+        tenantId: 'tenant-1',
+        gatewayId: 'gw-1',
+        sensorId: 'sensor-3',
+        sensorType: 'temperature',
+        encryptedData: 'enc-1',
+        iv: 'iv-1',
+        authTag: 'tag-1',
+        keyVersion: 1,
+      },
+      {
+        time: new Date('2026-03-23T09:55:00.000Z') as unknown as string,
+        tenantId: 'tenant-1',
+        gatewayId: 'gw-1',
+        sensorId: 'sensor-2',
+        sensorType: 'temperature',
+        encryptedData: 'enc-2',
+        iv: 'iv-2',
+        authTag: 'tag-2',
+        keyVersion: 1,
+      },
+      {
+        time: new Date('2026-03-23T09:54:00.000Z') as unknown as string,
+        tenantId: 'tenant-1',
+        gatewayId: 'gw-1',
+        sensorId: 'sensor-1',
+        sensorType: 'temperature',
+        encryptedData: 'enc-3',
+        iv: 'iv-3',
+        authTag: 'tag-3',
+        keyVersion: 1,
+      },
+    ];
+    qb.getMany.mockResolvedValue(rows);
+
+    const repository = {
+      createQueryBuilder: jest.fn().mockReturnValue(qb),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    const result = await service.paginatedQuery({
+      tenantId: 'tenant-1',
+      from: '2026-03-23T09:50:00.000Z',
+      to: '2026-03-23T10:00:00.000Z',
+      limit: 2,
+    });
+
+    expect(qb.andWhere).toHaveBeenNthCalledWith(1, 'm.tenantId = :tenantId', {
+      tenantId: 'tenant-1',
+    });
+    expect(result).toEqual({
+      data: rows.slice(0, 2),
+      nextCursor: '2026-03-23T09:55:00.000Z|sensor-2',
+      hasMore: true,
+    });
+  });
+
   it('supports legacy timestamp-only cursor values', async () => {
     const qb = createQueryBuilder();
     qb.getMany.mockResolvedValue([]);
@@ -134,6 +196,28 @@ describe('MeasurePersistenceService', () => {
 
     expect(qb.andWhere).toHaveBeenNthCalledWith(3, 'm.time < :cursor', {
       cursor: '2026-03-23T09:59:00.000Z',
+    });
+  });
+
+  it('falls back to legacy cursor condition when composite cursor is malformed', async () => {
+    const qb = createQueryBuilder();
+    qb.getMany.mockResolvedValue([]);
+
+    const repository = {
+      createQueryBuilder: jest.fn().mockReturnValue(qb),
+    };
+
+    const service = new MeasurePersistenceService(repository as never);
+
+    await service.paginatedQuery({
+      from: '2026-03-23T09:50:00.000Z',
+      to: '2026-03-23T10:00:00.000Z',
+      cursor: '2026-03-23T09:59:00.000Z|',
+      limit: 2,
+    });
+
+    expect(qb.andWhere).toHaveBeenNthCalledWith(3, 'm.time < :cursor', {
+      cursor: '2026-03-23T09:59:00.000Z|',
     });
   });
 

@@ -27,4 +27,32 @@ describe('MetricsController', () => {
     expect(getMetrics).toHaveBeenCalledTimes(1);
     expect(send).toHaveBeenCalledWith('# mock_metrics 1');
   });
+
+  it('propagates metrics retrieval errors after setting content type', async () => {
+    const getMetrics = jest
+      .fn()
+      .mockRejectedValue(new Error('registry failed'));
+    const metricsService = {
+      contentType: 'text/plain; version=0.0.4; charset=utf-8',
+      getMetrics,
+    } as unknown as MetricsService;
+
+    const controller = new MetricsController(metricsService);
+    const setHeader = jest.fn();
+    const send = jest.fn();
+    const response = {
+      setHeader,
+      send,
+    } as unknown as Response;
+
+    await expect(controller.metrics(response)).rejects.toThrow(
+      'registry failed',
+    );
+
+    expect(setHeader).toHaveBeenCalledWith(
+      'Content-Type',
+      'text/plain; version=0.0.4; charset=utf-8',
+    );
+    expect(send).not.toHaveBeenCalled();
+  });
 });

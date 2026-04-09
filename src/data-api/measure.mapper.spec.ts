@@ -138,6 +138,21 @@ describe('MeasureMapper', () => {
     expect(normalized.authTag).toBe('ffffffffffffffffffffffffffffffff');
   });
 
+  it('keeps timestamp unchanged when it is not a valid ISO date', () => {
+    const normalized = MeasureMapper.toEncryptedEnvelopeDto({
+      gatewayId: 'gw-1',
+      sensorId: 'sensor-1',
+      sensorType: 'temperature',
+      timestamp: 'not-a-date',
+      encryptedData: 'enc',
+      iv: 'iv',
+      authTag: 'tag',
+      keyVersion: 1,
+    });
+
+    expect(normalized.timestamp).toBe('not-a-date');
+  });
+
   it('maps stream item and stream response', async () => {
     expect(MeasureMapper.toStreamItemResponseDto(model)).toEqual(model);
 

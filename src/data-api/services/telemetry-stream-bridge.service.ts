@@ -4,15 +4,19 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import * as fs from 'node:fs';
 import {
   type ConnectionOptions,
-  connect,
   type NatsConnection,
   type Subscription,
 } from 'nats';
 import { EncryptedEnvelopeModel } from '../models/encrypted-envelope.model';
 import { StreamListenerService } from './stream-listener.service';
+import {
+  buildNatsConnectionOptions,
+  shouldSkipNatsBootstrap,
+  startNatsSubscription,
+  shutdownNatsResources,
+} from './nats-connection.utils';
 
 const TELEMETRY_SUBJECT = 'telemetry.data.*.*';
 
@@ -27,7 +31,7 @@ export class TelemetryStreamBridgeService
   constructor(private readonly streamListener: StreamListenerService) {}
 
   async onModuleInit(): Promise<void> {
-    if (process.env.NODE_ENV === 'test') {
+    if (shouldSkipNatsBootstrap()) {
       return;
     }
 
@@ -35,29 +39,33 @@ export class TelemetryStreamBridgeService
   }
 
   async onModuleDestroy(): Promise<void> {
-    this.subscription?.unsubscribe();
-    this.subscription = null;
+    const subscription = this.subscription;
+    const connection = this.connection;
 
-    if (this.connection) {
-      await this.connection.drain();
-      await this.connection.close();
-      this.connection = null;
-    }
+    this.subscription = null;
+    this.connection = null;
+
+    await shutdownNatsResources(subscription, connection);
   }
 
   private async connectAndSubscribe(): Promise<void> {
-    try {
-      this.connection = await connect(this.buildConnectionOptions());
-      this.subscription = this.connection.subscribe(TELEMETRY_SUBJECT);
+    const started = await startNatsSubscription({
+      connectionOptions: this.buildConnectionOptions(),
+      logger: this.logger,
+      subject: TELEMETRY_SUBJECT,
+      successMessage: `Subscribed to telemetry subject ${TELEMETRY_SUBJECT}`,
+      failureMessage: 'Failed to initialize telemetry NATS bridge',
+      onSubscription: (subscription) => {
+        void this.consumeMessages(subscription);
+      },
+    });
 
-      void this.consumeMessages(this.subscription);
-      this.logger.log(`Subscribed to telemetry subject ${TELEMETRY_SUBJECT}`);
-    } catch (error) {
-      this.logger.error(
-        'Failed to initialize telemetry NATS bridge',
-        error as Error,
-      );
+    if (!started) {
+      return;
     }
+
+    this.connection = started.connection;
+    this.subscription = started.subscription;
   }
 
   private async consumeMessages(subscription: Subscription): Promise<void> {
@@ -81,56 +89,7 @@ export class TelemetryStreamBridgeService
   }
 
   private buildConnectionOptions(): ConnectionOptions {
-    const options: ConnectionOptions = {
-      servers: this.resolveServers(),
-      name: process.env.NATS_CLIENT_NAME ?? 'data-api',
-    };
-
-    const caFile = process.env.NATS_TLS_CA;
-    const certFile = process.env.NATS_TLS_CERT;
-    const keyFile = process.env.NATS_TLS_KEY;
-
-    if (caFile && certFile && keyFile) {
-      try {
-        (options as { tls: any }).tls = {
-          ca: [fs.readFileSync(caFile)],
-          cert: fs.readFileSync(certFile),
-          key: fs.readFileSync(keyFile),
-        };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        this.logger.error(`Failed to load NATS TLS certificates: ${message}`);
-      }
-    }
-
-    const token = process.env.NATS_TOKEN?.trim();
-    const user = process.env.NATS_USER?.trim();
-    const pass = process.env.NATS_PASSWORD?.trim();
-
-    if (token) {
-      options.token = token;
-      return options;
-    }
-
-    if (user && pass) {
-      options.user = user;
-      options.pass = pass;
-    }
-
-    return options;
-  }
-
-  private resolveServers(): string[] {
-    const raw = process.env.NATS_SERVERS ?? process.env.NATS_URL;
-
-    if (!raw) {
-      return ['nats://localhost:4222'];
-    }
-
-    return raw
-      .split(',')
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0);
+    return buildNatsConnectionOptions(this.logger);
   }
 
   private extractTenantId(subject: string): string | undefined {

@@ -132,6 +132,31 @@ describe('MeasureService', () => {
       expect(mps.paginatedQuery.mock.calls).toHaveLength(0);
     });
 
+    it('should allow query execution when dates are invalid and cannot be parsed', async () => {
+      const mappedResult: PaginatedQueryModel = {
+        data: [],
+        hasMore: false,
+      };
+
+      mps.paginatedQuery.mockResolvedValue({
+        data: [],
+        hasMore: false,
+      });
+      jest
+        .spyOn(MeasureMapper, 'toPaginatedQueryModel')
+        .mockReturnValue(mappedResult);
+
+      await expect(
+        service.query({
+          ...input,
+          from: 'invalid-from',
+          to: 'invalid-to',
+        }),
+      ).resolves.toEqual(mappedResult);
+
+      expect(mps.paginatedQuery.mock.calls).toHaveLength(1);
+    });
+
     it('should throw BadRequestException on status 400', async () => {
       const error = {
         status: 400,
@@ -289,6 +314,25 @@ describe('MeasureService', () => {
       );
 
       expect(mps.nonPaginatedQuery.mock.calls).toHaveLength(0);
+    });
+
+    it('should allow export execution when dates are invalid and cannot be parsed', async () => {
+      const mappedResult: EncryptedEnvelopeModel[] = [];
+
+      mps.nonPaginatedQuery.mockResolvedValue([]);
+      jest
+        .spyOn(MeasureMapper, 'toEncryptedEnvelopeModels')
+        .mockReturnValue(mappedResult);
+
+      await expect(
+        service.export({
+          ...input,
+          from: 'invalid-from',
+          to: 'invalid-to',
+        }),
+      ).resolves.toEqual(mappedResult);
+
+      expect(mps.nonPaginatedQuery.mock.calls).toHaveLength(1);
     });
 
     it('should throw BadRequestException on status 400', async () => {
