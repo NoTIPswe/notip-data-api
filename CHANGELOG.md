@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/NoTIPswe/notip-data-api/compare/v1.3.0...v2.0.0) (2026-04-11)
+
+
+### Bug Fixes
+
+* update README ([3024382](https://github.com/NoTIPswe/notip-data-api/commit/30243829b150099d9a44e901bdfc249e450cbfec))
+
+
+### BREAKING CHANGES
+
+* new version
+
 # [1.3.0](https://github.com/NoTIPswe/notip-data-api/compare/v1.2.0...v1.3.0) (2026-04-09)
 
 
