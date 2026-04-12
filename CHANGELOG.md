@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/NoTIPswe/notip-data-api/compare/v2.0.0...v2.0.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* add quality and coverage badges to README ([c5de390](https://github.com/NoTIPswe/notip-data-api/commit/c5de3901c96da426d5f40e52d44df21e14ac271d))
+
 # [2.0.0](https://github.com/NoTIPswe/notip-data-api/compare/v1.3.0...v2.0.0) (2026-04-11)
 
 
