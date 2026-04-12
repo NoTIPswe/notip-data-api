@@ -1,4 +1,6 @@
 # notip-data-api
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=NoTIPswe_notip-data-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=NoTIPswe_notip-data-api)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=NoTIPswe_notip-data-api&metric=coverage)](https://sonarcloud.io/summary/new_code?id=NoTIPswe_notip-data-api)
 
 NestJS microservice that exposes encrypted sensor measures stored in TimescaleDB (PostgreSQL) to authorised tenants. It also bridges live telemetry arriving from NATS JetStream to HTTP clients via Server-Sent Events, and responds to internal NATS request-reply calls for storage cost reporting.
 
